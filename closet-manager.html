@@ -605,7 +605,7 @@ function buildRecord(id){
     id:itemId,created_at:id?(closetData.items.find(i=>i.id===id)?.created_at||now):now,updated_at:now,status:'active',
     identity:{name:gv('name')||'Untitled',brand:gv('brand')||null,collection_season:gv('collection')||null,year_acquired:parseInt(gv('year-acquired'))||null,vintage:{is_vintage:isV,era:isV?gv('vintage-era')||null:null},sku:gv('sku')||null,colorway_name:gv('colorway')||null},
     category:{department:gv2('dept')||null,category:gv2('cat')||null,subcategory:gv2('subcat')||null},
-    image:{filename:fn,format:fmt,alt_images:[]},
+    image:{filename:fn,format:fmt,public_url:'https://my-closet.pages.dev/'+fn,alt_images:[]},
     visual:{colors:{primary:gv('color1')||null,secondary:gv('color2')||null,tertiary:gv('color3')||null},pattern:gv2('pattern')||null,print_description:gv('print-desc')||null,silhouette:gv2('silhouette')||null,length:gv2('length')||null,sleeve_length:gv2('sleeve')||null,embellishment:emb.length?emb:['None']},
     construction:{fabric:getFabric(),lining:{type:lt,material:(lt==='Partial'||lt==='Full')?gv('lining-mat')||null:null},weight:gv2('weight')||null,structure:gv2('structure')||null,seasons:seas,care:gv('care')||null,country_of_origin:gv('origin')||null,sustainability:sus.length?sus:['None']},
     fit:{cut:gv('cut')||null,size:gv('size')||null,size_system:gv2('size-system')||null,inseam_length:gv('inseam')||null,fit_notes:gv('fit-notes')||null,fit_relative:gv2('fit-relative')||null},
