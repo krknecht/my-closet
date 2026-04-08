@@ -10,7 +10,7 @@
       "status": "active",
       "identity": {
         "name": "Mid-Rise Straight Jeans",
-        "brand": "ChloÃ©",
+        "brand": "ChloÃÂ©",
         "collection_season": null,
         "year_acquired": 2026,
         "vintage": {
@@ -118,7 +118,7 @@
           "pink denim",
           "luxury denim",
           "designer jeans",
-          "ChloÃ©"
+          "ChloÃÂ©"
         ],
         "notes": null,
         "claude_context": null
@@ -258,7 +258,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Vintage Hourglass CrÃªpe 'CC' Jacket",
+        "name": "Vintage Hourglass CrÃÂªpe 'CC' Jacket",
         "brand": "Chanel",
         "collection_season": null,
         "year_acquired": null,
@@ -713,7 +713,7 @@
           "Summer weekends"
         ],
         "feels": [],
-        "style_notes": "A step above jean shorts. Pills easily â handle with care.",
+        "style_notes": "A step above jean shorts. Pills easily Ã¢ÂÂ handle with care.",
         "works_with": []
       },
       "provenance": {
@@ -750,7 +750,7 @@
           "ecru"
         ],
         "notes": null,
-        "claude_context": "Pills easily â avoid abrasive surfaces and rough washing."
+        "claude_context": "Pills easily Ã¢ÂÂ avoid abrasive surfaces and rough washing."
       }
     },
     {
@@ -759,7 +759,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Lowell Wrap Belt in Leather â Bone",
+        "name": "Lowell Wrap Belt in Leather Ã¢ÂÂ Bone",
         "brand": "KALLMEYER",
         "collection_season": null,
         "year_acquired": 2026,
@@ -880,7 +880,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Lowell Wrap Belt in Leather â Dark Brown",
+        "name": "Lowell Wrap Belt in Leather Ã¢ÂÂ Dark Brown",
         "brand": "KALLMEYER",
         "collection_season": null,
         "year_acquired": 2026,
@@ -1152,7 +1152,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "MÃ©lange weave â subtle tonal variation in the fabric.",
+        "print_description": "MÃÂ©lange weave Ã¢ÂÂ subtle tonal variation in the fabric.",
         "silhouette": "Wide-leg",
         "length": "Floor",
         "embellishment": [
@@ -1244,7 +1244,7 @@
           "floor length",
           "suiting",
           "viscose wool",
-          "mÃ©lange",
+          "mÃÂ©lange",
           "tailored",
           "SS26",
           "TWP"
@@ -1287,7 +1287,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "MÃ©lange weave â subtle tonal variation in the fabric.",
+        "print_description": "MÃÂ©lange weave Ã¢ÂÂ subtle tonal variation in the fabric.",
         "silhouette": "Boxy",
         "length": "Cropped",
         "embellishment": [
@@ -1374,7 +1374,7 @@
         "tags": [
           "viscose wool",
           "suiting blend",
-          "mÃ©lange",
+          "mÃÂ©lange",
           "structured",
           "draped",
           "button down",
@@ -1420,7 +1420,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "Grey mÃ©lange wool",
+        "print_description": "Grey mÃÂ©lange wool",
         "silhouette": "Double-breasted",
         "length": "Thigh",
         "sleeve_length": "Long sleeve",
@@ -1640,6 +1640,132 @@
         ],
         "notes": null,
         "claude_context": "Only recommend when little walking is anticipated",
+        "rotation": null
+      }
+    },
+    {
+      "id": "3cd4416a-d88a-41d3-bb60-74bbd31d9d5d",
+      "created_at": "2026-04-08T19:56:17.146Z",
+      "updated_at": "2026-04-08T19:56:17.146Z",
+      "status": "active",
+      "identity": {
+        "name": "Double-breasted wool blazer",
+        "brand": "Saint Laurent",
+        "collection_season": "SS26",
+        "year_acquired": 2026,
+        "vintage": {
+          "is_vintage": false,
+          "era": null
+        },
+        "sku": "p01162488",
+        "colorway_name": "Black"
+      },
+      "category": {
+        "department": "Clothing",
+        "category": "Suits & Sets",
+        "subcategory": "Suit jacket"
+      },
+      "image": {
+        "filename": "3cd4416a-d88a-41d3-bb60-74bbd31d9d5d.avif",
+        "format": "avif",
+        "alt_images": []
+      },
+      "visual": {
+        "colors": {
+          "primary": "Black",
+          "secondary": null,
+          "tertiary": null
+        },
+        "pattern": "Solid",
+        "print_description": null,
+        "silhouette": "Semi-fitted",
+        "length": "Hip",
+        "sleeve_length": "Long sleeve",
+        "embellishment": [
+          "None"
+        ]
+      },
+      "construction": {
+        "fabric": [
+          {
+            "material": "Wool",
+            "percentage": 100
+          }
+        ],
+        "lining": {
+          "type": "Full",
+          "material": "Silk"
+        },
+        "weight": "Medium",
+        "structure": "Structured",
+        "seasons": [
+          "spring",
+          "fall",
+          "winter"
+        ],
+        "care": "Dry clean only",
+        "country_of_origin": "Italy",
+        "sustainability": [
+          "None"
+        ]
+      },
+      "fit": {
+        "cut": "Straight",
+        "size": "36",
+        "size_system": "FR",
+        "inseam_length": null,
+        "fit_notes": null,
+        "fit_relative": "True to size"
+      },
+      "wearing_profile": {
+        "formality": {
+          "min": 5,
+          "max": 8
+        },
+        "occasions": [
+          "work",
+          "date night"
+        ],
+        "feels": [
+          "Confident",
+          "Powerful"
+        ],
+        "style_notes": "Worn with jeans, trousers, or no pants for a date night look",
+        "works_with": []
+      },
+      "provenance": {
+        "retailer": "Mytheresa",
+        "source_url": "https://www.mytheresa.com/us/en/women/saint-laurent-double-breasted-wool-blazer-black-p01162488",
+        "purchase_price": {
+          "amount": null,
+          "currency": null
+        },
+        "retail_price": {
+          "amount": null,
+          "currency": null
+        },
+        "condition_at_acquisition": "New with tags",
+        "current_condition": null,
+        "storage_location": "Main Closet",
+        "acquisition_type": "Purchased"
+      },
+      "wearing_history": {
+        "last_worn": null,
+        "times_worn": 0,
+        "cost_per_wear": null,
+        "outfit_log": []
+      },
+      "meta": {
+        "tags": [
+          "tailored",
+          "oversized fit",
+          "gold-toned buttons",
+          "embossed buttons",
+          "made in italy",
+          "strong shoulders"
+        ],
+        "notes": null,
+        "claude_context": null,
         "rotation": null
       }
     }
