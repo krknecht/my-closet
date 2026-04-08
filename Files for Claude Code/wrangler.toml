@@ -1,0 +1,11 @@
+name = "closet-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+GITHUB_OWNER = "katerknecht"
+GITHUB_REPO  = "my-closet"
+
+# Secrets — set these via CLI, never commit them:
+#   wrangler secret put GITHUB_TOKEN
+#   wrangler secret put CLOSET_PASSPHRASE

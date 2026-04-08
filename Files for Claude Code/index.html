@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Closet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1c1917; --ink-2: #57534e; --ink-3: #a8a29e;
+  --paper: #faf9f7; --paper-2: #f2f0ec; --paper-3: #e8e5df;
+  --rule: #ddd9d2; --accent: #2d4a2d; --accent-light: #e8f0e8;
+  --accent-mid: #4a7c4a; --gold: #8b6914; --gold-light: #f5edd6;
+  --warn: #7c3d2a; --warn-light: #f5e8e3;
+  --radius: 4px; --radius-lg: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Mono', monospace;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1000; opacity: 0.4;
+}
+
+body::after {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-mid) 50%, transparent 100%);
+  z-index: 100; pointer-events: none;
+}
+
+/* ── Header ── */
+header {
+  border-bottom: 1px solid var(--rule);
+  padding: 1.75rem 2.5rem 1.25rem;
+  position: sticky; top: 0;
+  background: var(--paper); z-index: 50;
+}
+
+.header-top {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.header-eyebrow {
+  font-size: 9px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+
+.header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px; font-weight: 300;
+  letter-spacing: 0.02em; color: var(--ink);
+}
+
+.header-count {
+  font-size: 10px; color: var(--ink-3);
+  letter-spacing: 0.08em; margin-left: auto;
+}
+
+/* ── Filters ── */
+.filter-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 5px 14px;
+  border: 1px solid var(--rule); border-radius: 20px;
+  background: transparent; color: var(--ink-3);
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.filter-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+.filter-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.filter-sep {
+  width: 1px; height: 16px;
+  background: var(--rule); flex-shrink: 0;
+}
+
+.search-wrap {
+  margin-left: auto;
+  position: relative;
+}
+
+.search-input {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  padding: 5px 12px 5px 28px;
+  border: 1px solid var(--rule); border-radius: 20px;
+  background: var(--paper); color: var(--ink);
+  width: 180px; transition: all 0.15s;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--ink-3); width: 220px; background: #fff;
+}
+
+.search-icon {
+  position: absolute; left: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px; color: var(--ink-3); pointer-events: none;
+}
+
+/* ── Grid ── */
+main { padding: 2rem 2.5rem; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1.25rem;
+}
+
+/* ── Item card ── */
+.item-card {
+  border: 1px solid var(--rule); border-radius: var(--radius-lg);
+  overflow: hidden; background: var(--paper);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.item-card:hover {
+  border-color: var(--ink-3);
+  box-shadow: 0 4px 24px rgba(28,25,23,0.07);
+  transform: translateY(-2px);
+}
+
+.item-img {
+  background: var(--paper-2);
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  position: relative;
+}
+
+.item-img img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+  transition: transform 0.4s;
+}
+
+.item-card:hover .item-img img { transform: scale(1.03); }
+
+.item-img-ph {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px; color: var(--ink-3);
+}
+
+.item-vintage-badge {
+  position: absolute; top: 8px; left: 8px;
+  font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 2px 7px;
+  background: var(--gold-light); color: var(--gold);
+  border: 1px solid #ddc98a; border-radius: 20px;
+}
+
+.item-body { padding: 0.875rem 1rem 1rem; }
+
+.item-meta-top {
+  display: flex; align-items: center;
+  gap: 5px; margin-bottom: 4px; flex-wrap: wrap;
+}
+
+.item-brand {
+  font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+
+.item-season {
+  font-size: 9px; color: var(--ink-3);
+  opacity: 0.7; letter-spacing: 0.06em;
+}
+
+.item-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px; font-weight: 400; line-height: 1.3;
+  color: var(--ink); margin-bottom: 8px;
+}
+
+.item-chips {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;
+}
+
+.chip {
+  display: inline-block; padding: 2px 8px;
+  background: var(--paper-3); border: 1px solid var(--rule);
+  border-radius: 20px; font-size: 10px;
+  color: var(--ink-2); letter-spacing: 0.04em;
+}
+
+.chip-vintage {
+  background: var(--gold-light); color: var(--gold);
+  border-color: #ddc98a;
+}
+
+.item-formality {
+  display: flex; align-items: center;
+  gap: 7px; margin-bottom: 5px;
+}
+
+.form-label {
+  font-size: 9px; color: var(--ink-3);
+  letter-spacing: 0.04em; min-width: 22px;
+}
+
+.form-bar-wrap {
+  flex: 1; height: 2px; background: var(--paper-3);
+  border-radius: 2px; position: relative; overflow: hidden;
+}
+
+.form-bar {
+  position: absolute; top: 0; height: 100%;
+  background: var(--accent-mid); border-radius: 2px;
+}
+
+.item-occasions {
+  font-size: 10px; color: var(--ink-3);
+  letter-spacing: 0.03em; line-height: 1.5;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ── Detail drawer ── */
+.drawer-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(28,25,23,0.4);
+  z-index: 200; backdrop-filter: blur(2px);
+}
+
+.drawer-overlay.open { display: block; }
+
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(520px, 100vw);
+  background: var(--paper);
+  border-left: 1px solid var(--rule);
+  z-index: 201;
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  overflow: hidden;
+}
+
+.drawer.open { transform: translateX(0); }
+
+.drawer-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--rule);
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+
+.drawer-brand {
+  font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+
+.drawer-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 300; color: var(--ink);
+  flex: 1; line-height: 1.2;
+}
+
+.drawer-close {
+  background: none; border: none;
+  font-size: 20px; color: var(--ink-3);
+  cursor: pointer; line-height: 1; padding: 4px;
+  transition: color 0.15s;
+}
+
+.drawer-close:hover { color: var(--ink); }
+
+.drawer-body {
+  flex: 1; overflow-y: auto;
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.drawer-img-col { grid-column: 1 / -1; }
+
+.drawer-img {
+  aspect-ratio: 3/4;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--paper-2);
+  max-height: 320px;
+}
+
+.drawer-img img {
+  width: 100%; height: 100%;
+  object-fit: contain; display: block;
+}
+
+.detail-group { display: flex; flex-direction: column; gap: 6px; }
+.detail-group.full { grid-column: 1 / -1; }
+
+.detail-label {
+  font-size: 8px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-3);
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  font-size: 12px; color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.detail-value.prominent {
+  font-size: 13px; color: var(--ink);
+}
+
+.detail-tags {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px;
+}
+
+.detail-tag {
+  font-size: 10px; padding: 2px 8px;
+  background: var(--accent-light); color: var(--accent);
+  border-radius: 20px; letter-spacing: 0.04em;
+}
+
+.detail-rule {
+  grid-column: 1 / -1;
+  height: 1px; background: var(--rule);
+}
+
+.detail-section-label {
+  grid-column: 1 / -1;
+  font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-3);
+  padding-top: 4px;
+}
+
+.formality-detail {
+  display: flex; align-items: center; gap: 10px;
+}
+
+.formality-detail .form-bar-wrap { flex: 1; height: 3px; }
+
+.source-link {
+  color: var(--accent-mid);
+  text-decoration: none; font-size: 11px;
+}
+
+.source-link:hover { text-decoration: underline; }
+
+.claude-context-box {
+  background: var(--gold-light);
+  border: 1px solid #ddc98a;
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--gold);
+  line-height: 1.6;
+  grid-column: 1 / -1;
+}
+
+/* ── Loading / empty states ── */
+.state-box {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  min-height: 40vh; gap: 10px;
+  color: var(--ink-3);
+}
+
+.state-box p {
+  font-size: 12px; letter-spacing: 0.06em;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+}
+
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--rule);
+  border-top-color: var(--accent-mid);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden { display: none !important; }
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid var(--rule);
+  padding: 1.25rem 2.5rem;
+  font-size: 9px; color: var(--ink-3);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin-top: 3rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  header, main, footer { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+  .drawer { width: 100vw; }
+  .drawer-body { grid-template-columns: 1fr; }
+  .search-wrap { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="header-eyebrow">Visual Library</div>
+      <div class="header-title">My Closet</div>
+    </div>
+    <div class="header-count" id="header-count"></div>
+  </div>
+  <div class="filter-row" id="filter-row">
+    <div class="state-box" style="min-height:auto;flex-direction:row;">
+      <div class="spinner" style="width:14px;height:14px;border-width:1.5px;"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="state-box" id="loading-state">
+    <div class="spinner"></div>
+    <p>Loading closet…</p>
+  </div>
+  <div class="state-box hidden" id="empty-state">
+    <p>No items found.</p>
+  </div>
+  <div class="grid hidden" id="grid"></div>
+</main>
+
+<footer id="footer" style="display:none">Closet — Visual Library · my-closet.pages.dev</footer>
+
+<!-- Detail drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div style="flex:1">
+      <div class="drawer-brand" id="d-brand"></div>
+      <div class="drawer-name" id="d-name"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let allItems = [];
+let activeFilter = 'All';
+let searchQuery = '';
+
+const FORMALITY = {
+  1:'Loungewear',2:'Casual',3:'Weekend casual',4:'Smart casual',
+  5:'Smart casual (elevated)',6:'Business casual',7:'Business formal',
+  8:'Cocktail / Evening',9:'Formal / Gala',10:'Black tie'
+};
+
+const DEPT_EMOJI = {
+  'Clothing':'🧺','Shoes':'👟','Bags':'👜',
+  'Accessories':'💍','Jewelry':'💎',
+  'Activewear':'🏃','Swimwear':'🌊','Lingerie & Loungewear':'🌙'
+};
+
+// ═══════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════
+async function loadCloset() {
+  try {
+    const res = await fetch('closet.json?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    allItems = data.items || [];
+    init();
+  } catch(e) {
+    document.getElementById('loading-state').innerHTML =
+      '<p style="color:var(--warn)">Could not load closet.json — ' + e.message + '</p>';
+  }
+}
+
+function init() {
+  document.getElementById('loading-state').classList.add('hidden');
+  document.getElementById('footer').style.display = '';
+  buildFilters();
+  renderGrid();
+}
+
+// ═══════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════
+function buildFilters() {
+  const depts = [...new Set(allItems.map(i => i.category.department))].sort();
+  const row = document.getElementById('filter-row');
+  row.innerHTML = '';
+
+  // Search
+  const sw = document.createElement('div');
+  sw.className = 'search-wrap';
+  sw.innerHTML = '<span class="search-icon">⌕</span><input class="search-input" id="search-input" placeholder="Search…" oninput="onSearch(this.value)" />';
+  row.appendChild(sw);
+
+  row.appendChild(makeSep());
+
+  // All button
+  row.appendChild(makeFilterBtn('All', true));
+
+  // Department buttons
+  depts.forEach(d => row.appendChild(makeFilterBtn(d, false)));
+}
+
+function makeSep() {
+  const s = document.createElement('div'); s.className = 'filter-sep'; return s;
+}
+
+function makeFilterBtn(label, active) {
+  const btn = document.createElement('button');
+  btn.className = 'filter-btn' + (active ? ' active' : '');
+  btn.textContent = label;
+  btn.onclick = () => setFilter(label);
+  btn.dataset.filter = label;
+  return btn;
+}
+
+function setFilter(val) {
+  activeFilter = val;
+  document.querySelectorAll('.filter-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.filter === val));
+  renderGrid();
+}
+
+function onSearch(val) {
+  searchQuery = val.toLowerCase().trim();
+  renderGrid();
+}
+
+// ═══════════════════════════════════════
+// RENDER GRID
+// ═══════════════════════════════════════
+function renderGrid() {
+  const filtered = allItems.filter(item => {
+    if (item.status !== 'active') return false;
+    if (activeFilter !== 'All' && item.category.department !== activeFilter) return false;
+    if (searchQuery) {
+      const haystack = [
+        item.identity.name, item.identity.brand,
+        item.category.category, item.category.subcategory,
+        item.visual.colors.primary, item.visual.pattern,
+        ...(item.meta.tags || [])
+      ].join(' ').toLowerCase();
+      if (!haystack.includes(searchQuery)) return false;
+    }
+    return true;
+  });
+
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty-state');
+  const count = document.getElementById('header-count');
+
+  count.textContent = filtered.length + ' of ' + allItems.filter(i => i.status === 'active').length + ' items';
+
+  if (!filtered.length) {
+    grid.classList.add('hidden');
+    empty.classList.remove('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  grid.classList.remove('hidden');
+  grid.innerHTML = '';
+
+  filtered.forEach(item => {
+    const card = document.createElement('article');
+    card.className = 'item-card';
+    card.onclick = () => openDrawer(item);
+
+    const imgDiv = document.createElement('div');
+    imgDiv.className = 'item-img';
+
+    if (item.image && item.image.filename) {
+      const img = document.createElement('img');
+      img.src = item.image.filename;
+      img.alt = item.identity.name;
+      img.loading = 'lazy';
+      img.onerror = () => {
+        img.remove();
+        const ph = document.createElement('div');
+        ph.className = 'item-img-ph';
+        ph.textContent = DEPT_EMOJI[item.category.department] || '🧺';
+        imgDiv.appendChild(ph);
+      };
+      imgDiv.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'item-img-ph';
+      ph.textContent = DEPT_EMOJI[item.category.department] || '🧺';
+      imgDiv.appendChild(ph);
+    }
+
+    if (item.identity.vintage && item.identity.vintage.is_vintage) {
+      const badge = document.createElement('div');
+      badge.className = 'item-vintage-badge';
+      badge.textContent = 'Vintage';
+      imgDiv.appendChild(badge);
+    }
+
+    const body = document.createElement('div');
+    body.className = 'item-body';
+
+    const metaTop = document.createElement('div');
+    metaTop.className = 'item-meta-top';
+    if (item.identity.brand) {
+      const b = document.createElement('span');
+      b.className = 'item-brand';
+      b.textContent = item.identity.brand;
+      metaTop.appendChild(b);
+    }
+    if (item.identity.collection_season) {
+      const s = document.createElement('span');
+      s.className = 'item-season';
+      s.textContent = item.identity.collection_season;
+      metaTop.appendChild(s);
+    }
+
+    const name = document.createElement('div');
+    name.className = 'item-name';
+    name.textContent = item.identity.name;
+
+    const chips = document.createElement('div');
+    chips.className = 'item-chips';
+    if (item.visual.colors.primary) chips.appendChild(makeChip(item.visual.colors.primary));
+    if (item.visual.pattern && item.visual.pattern !== 'Solid') chips.appendChild(makeChip(item.visual.pattern));
+    if (item.category.subcategory) chips.appendChild(makeChip(item.category.subcategory));
+
+    const formDiv = document.createElement('div');
+    formDiv.className = 'item-formality';
+    const lo = item.wearing_profile.formality.min;
+    const hi = item.wearing_profile.formality.max;
+    formDiv.innerHTML = `
+      <span class="form-label">${lo}–${hi}</span>
+      <div class="form-bar-wrap">
+        <div class="form-bar" style="left:${((lo-1)/9)*100}%;width:${((hi-lo)/9)*100}%"></div>
+      </div>`;
+
+    body.appendChild(metaTop);
+    body.appendChild(name);
+    body.appendChild(chips);
+    body.appendChild(formDiv);
+
+    if (item.wearing_profile.occasions && item.wearing_profile.occasions.length) {
+      const occ = document.createElement('div');
+      occ.className = 'item-occasions';
+      occ.textContent = '↳ ' + item.wearing_profile.occasions.join(', ');
+      body.appendChild(occ);
+    }
+
+    card.appendChild(imgDiv);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+}
+
+function makeChip(text, extra) {
+  const c = document.createElement('span');
+  c.className = 'chip' + (extra ? ' ' + extra : '');
+  c.textContent = text;
+  return c;
+}
+
+// ═══════════════════════════════════════
+// DETAIL DRAWER
+// ═══════════════════════════════════════
+function openDrawer(item) {
+  const db = document.getElementById('drawer-body');
+  document.getElementById('d-brand').textContent = item.identity.brand || '';
+  document.getElementById('d-name').textContent = item.identity.name;
+
+  db.innerHTML = '';
+
+  // Image
+  const imgCol = div('drawer-img-col');
+  const imgWrap = div('drawer-img');
+  if (item.image && item.image.filename) {
+    const img = document.createElement('img');
+    img.src = item.image.filename;
+    img.alt = item.identity.name;
+    imgWrap.appendChild(img);
+  } else {
+    const ph = div('item-img-ph');
+    ph.textContent = DEPT_EMOJI[item.category.department] || '🧺';
+    imgWrap.appendChild(ph);
+  }
+  imgCol.appendChild(imgWrap);
+  db.appendChild(imgCol);
+
+  // Category
+  const catStr = [item.category.department, item.category.category, item.category.subcategory]
+    .filter(Boolean).join(' › ');
+  db.appendChild(detailGroup('Category', catStr));
+
+  // Colors
+  const colors = [item.visual.colors.primary, item.visual.colors.secondary, item.visual.colors.tertiary]
+    .filter(Boolean).join(', ');
+  if (colors) db.appendChild(detailGroup('Color', colors));
+
+  // Pattern
+  if (item.visual.pattern) {
+    const patStr = item.visual.print_description
+      ? item.visual.pattern + ' — ' + item.visual.print_description
+      : item.visual.pattern;
+    db.appendChild(detailGroup('Pattern', patStr));
+  }
+
+  // Silhouette + Length
+  if (item.visual.silhouette) db.appendChild(detailGroup('Silhouette', item.visual.silhouette));
+  if (item.visual.length) db.appendChild(detailGroup('Length', item.visual.length));
+  if (item.visual.sleeve_length) db.appendChild(detailGroup('Sleeve length', item.visual.sleeve_length));
+
+  db.appendChild(rule());
+  db.appendChild(sectionLabel('Construction'));
+
+  // Fabric
+  if (item.construction.fabric && item.construction.fabric.length) {
+    const fabStr = item.construction.fabric.map(f =>
+      f.percentage ? f.percentage + '% ' + f.material : f.material
+    ).join(', ');
+    db.appendChild(detailGroup('Fabric', fabStr, true));
+  }
+
+  // Lining
+  if (item.construction.lining && item.construction.lining.type && item.construction.lining.type !== 'None') {
+    const linStr = item.construction.lining.material
+      ? item.construction.lining.type + ' — ' + item.construction.lining.material
+      : item.construction.lining.type;
+    db.appendChild(detailGroup('Lining', linStr));
+  }
+
+  if (item.construction.weight) db.appendChild(detailGroup('Weight', item.construction.weight));
+  if (item.construction.structure) db.appendChild(detailGroup('Structure', item.construction.structure));
+  if (item.construction.care) db.appendChild(detailGroup('Care', item.construction.care, true));
+  if (item.construction.country_of_origin) db.appendChild(detailGroup('Origin', item.construction.country_of_origin));
+
+  if (item.construction.seasons && item.construction.seasons.length) {
+    const seasons = item.construction.seasons.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' / ');
+    db.appendChild(detailGroup('Season', seasons));
+  }
+
+  if (item.construction.sustainability && !item.construction.sustainability.includes('None')) {
+    db.appendChild(detailGroup('Sustainability', item.construction.sustainability.join(', ')));
+  }
+
+  db.appendChild(rule());
+  db.appendChild(sectionLabel('Fit'));
+
+  if (item.fit.cut) db.appendChild(detailGroup('Cut', item.fit.cut));
+  if (item.fit.size) {
+    const sizeStr = item.fit.size + (item.fit.size_system ? ' (' + item.fit.size_system + ')' : '');
+    db.appendChild(detailGroup('My size', sizeStr));
+  }
+  if (item.fit.fit_relative) db.appendChild(detailGroup('Sizing', item.fit.fit_relative));
+  if (item.fit.inseam_length) db.appendChild(detailGroup('Inseam / Length', item.fit.inseam_length));
+  if (item.fit.fit_notes) db.appendChild(detailGroup('Fit notes', item.fit.fit_notes, true));
+
+  db.appendChild(rule());
+  db.appendChild(sectionLabel('Wearing profile'));
+
+  // Formality
+  const lo = item.wearing_profile.formality.min;
+  const hi = item.wearing_profile.formality.max;
+  const formEl = div('detail-group');
+  const formLabel = div('detail-label'); formLabel.textContent = 'Formality';
+  const formVal = div('detail-value');
+  formVal.innerHTML = `
+    <div class="formality-detail">
+      <span>${lo}–${hi}/10</span>
+      <div class="form-bar-wrap">
+        <div class="form-bar" style="left:${((lo-1)/9)*100}%;width:${((hi-lo)/9)*100}%"></div>
+      </div>
+      <span style="font-size:10px;color:var(--ink-3)">${FORMALITY[lo] || ''}</span>
+    </div>`;
+  formEl.appendChild(formLabel); formEl.appendChild(formVal);
+  db.appendChild(formEl);
+
+  if (item.wearing_profile.occasions && item.wearing_profile.occasions.length)
+    db.appendChild(detailGroup('Occasions', item.wearing_profile.occasions.join(', '), true));
+  if (item.wearing_profile.feels && item.wearing_profile.feels.length)
+    db.appendChild(detailGroup('Feels', item.wearing_profile.feels.join(', '), true));
+  if (item.wearing_profile.style_notes)
+    db.appendChild(detailGroup('Style notes', item.wearing_profile.style_notes, true));
+
+  db.appendChild(rule());
+  db.appendChild(sectionLabel('Provenance'));
+
+  if (item.identity.vintage && item.identity.vintage.is_vintage) {
+    const vintStr = item.identity.vintage.era ? 'Vintage — ' + item.identity.vintage.era : 'Vintage';
+    db.appendChild(detailGroup('Acquisition type', vintStr));
+  } else if (item.provenance.acquisition_type) {
+    db.appendChild(detailGroup('Acquisition type', item.provenance.acquisition_type));
+  }
+
+  if (item.provenance.retailer) db.appendChild(detailGroup('Retailer', item.provenance.retailer));
+  if (item.identity.collection_season) db.appendChild(detailGroup('Collection', item.identity.collection_season));
+  if (item.identity.year_acquired) db.appendChild(detailGroup('Year acquired', String(item.identity.year_acquired)));
+  if (item.identity.sku) db.appendChild(detailGroup('SKU', item.identity.sku));
+
+  if (item.provenance.purchase_price && item.provenance.purchase_price.amount) {
+    db.appendChild(detailGroup('Purchase price',
+      item.provenance.purchase_price.currency + ' ' + item.provenance.purchase_price.amount));
+  }
+
+  if (item.provenance.current_condition) db.appendChild(detailGroup('Condition', item.provenance.current_condition));
+
+  if (item.provenance.source_url) {
+    const linkEl = div('detail-group full');
+    const lLabel = div('detail-label'); lLabel.textContent = 'Source';
+    const lVal = document.createElement('a');
+    lVal.className = 'source-link'; lVal.href = item.provenance.source_url;
+    lVal.target = '_blank'; lVal.rel = 'noopener';
+    lVal.textContent = item.provenance.retailer || item.provenance.source_url;
+    linkEl.appendChild(lLabel); linkEl.appendChild(lVal);
+    db.appendChild(linkEl);
+  }
+
+  // Tags
+  if (item.meta.tags && item.meta.tags.length) {
+    db.appendChild(rule());
+    const tagEl = div('detail-group full');
+    const tLabel = div('detail-label'); tLabel.textContent = 'Tags';
+    const tWrap = div('detail-tags');
+    item.meta.tags.forEach(t => {
+      const tag = document.createElement('span');
+      tag.className = 'detail-tag'; tag.textContent = t;
+      tWrap.appendChild(tag);
+    });
+    tagEl.appendChild(tLabel); tagEl.appendChild(tWrap);
+    db.appendChild(tagEl);
+  }
+
+  // Claude context note
+  if (item.meta.claude_context) {
+    const ctx = document.createElement('div');
+    ctx.className = 'claude-context-box';
+    ctx.innerHTML = '<strong style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;">Claude note</strong><br>' + escHTML(item.meta.claude_context);
+    db.appendChild(ctx);
+  }
+
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+// ── Helpers ──
+function div(cls) {
+  const el = document.createElement('div');
+  if (cls) el.className = cls;
+  return el;
+}
+
+function detailGroup(label, value, full) {
+  const g = div('detail-group' + (full ? ' full' : ''));
+  const l = div('detail-label'); l.textContent = label;
+  const v = div('detail-value' + (full ? '' : ' prominent'));
+  v.textContent = value;
+  g.appendChild(l); g.appendChild(v);
+  return g;
+}
+
+function rule() {
+  return div('detail-rule');
+}
+
+function sectionLabel(text) {
+  const el = div('detail-section-label');
+  el.textContent = text;
+  return el;
+}
+
+function escHTML(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+loadCloset();
+</script>
+</body>
+</html>
