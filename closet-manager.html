@@ -164,38 +164,30 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 </div>
 <!-- CENTER -->
 <div class="panel form-panel">
-  <div class="form-mode-bar">
-    <button class="form-mode-btn active" id="mode-url-btn" onclick="setMode('url')">URL Import</button>
-    <button class="form-mode-btn" id="mode-manual-btn" onclick="setMode('manual')">Manual / Photo</button>
-  </div>
-  <!-- URL mode -->
-  <div id="mode-url">
-    <div class="fsection">
-      <div class="fsh"><span class="fsn">01</span><span class="fsl">Import from product page</span><span class="fsr"></span></div>
-      <div class="import-bar">
-        <input id="pdp-url" type="url" placeholder="Paste a product page URL…"/>
-        <button class="btn btn-primary" id="fetch-btn" onclick="fetchFromURL()">Look up ↗</button>
-      </div>
-      <div class="status" id="fetch-status"></div>
-      <div class="legend" id="autofill-legend"><span class="legend-dot"></span> Green fields were auto-filled — review before saving</div>
-      <div id="url-img-section" style="display:none;margin-top:9px">
-        <div style="margin-bottom:6px;border:1px solid var(--rule);border-radius:var(--radius-lg);overflow:hidden;background:var(--paper-3);max-height:200px;display:flex;align-items:center;justify-content:center"><img id="url-img-prev-img" src="" alt="" style="max-width:100%;max-height:200px;object-fit:contain;display:block"/></div>
-        <div id="url-img-strip" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
-      </div>
+  <!-- §01 URL import -->
+  <div class="fsection">
+    <div class="fsh"><span class="fsn">01</span><span class="fsl">Import from product page</span><span class="fsr"></span></div>
+    <div class="import-bar">
+      <input id="pdp-url" type="url" placeholder="Paste a product page URL…"/>
+      <button class="btn btn-primary" id="fetch-btn" onclick="fetchFromURL()">Look up ↗</button>
+    </div>
+    <div class="status" id="fetch-status"></div>
+    <div class="legend" id="autofill-legend"><span class="legend-dot"></span> Green fields were auto-filled — review before saving</div>
+    <div id="url-img-section" style="display:none;margin-top:9px">
+      <div style="margin-bottom:6px;border:1px solid var(--rule);border-radius:var(--radius-lg);overflow:hidden;background:var(--paper-3);max-height:200px;display:flex;align-items:center;justify-content:center"><img id="url-img-prev-img" src="" alt="" style="max-width:100%;max-height:200px;object-fit:contain;display:block"/></div>
+      <div id="url-img-strip" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
     </div>
   </div>
-  <!-- Manual mode -->
-  <div id="mode-manual" style="display:none">
-    <div class="fsection">
-      <div class="fsh"><span class="fsn">01</span><span class="fsl">Item photo</span><span class="fsr"></span></div>
-      <div class="img-zone" id="img-zone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-        <input type="file" id="manual-photo" accept="image/*" onchange="onPhotoSel(event)"/>
-        <div class="img-zone-lbl"><span>📷</span>Drag & drop or click to upload photo</div>
-      </div>
-      <div class="img-prev" id="img-prev" style="display:none"><img id="img-prev-img" src="" alt=""/></div>
-      <div class="analyze-bar" id="analyze-bar"><p>Photo uploaded. AI can analyze it to pre-fill visual fields.</p><button class="btn btn-accent" id="analyze-btn" onclick="analyzePhoto()">Analyze ✦</button></div>
-      <div class="status" id="photo-status"></div>
+  <!-- §01b Photo upload (always visible) -->
+  <div class="fsection">
+    <div class="fsh"><span class="fsn">↑</span><span class="fsl">Photo</span><span class="fsr"></span></div>
+    <div class="img-zone" id="img-zone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+      <input type="file" id="manual-photo" accept="image/*" onchange="onPhotoSel(event)"/>
+      <div class="img-zone-lbl"><span>📷</span>Drag & drop or click to upload a photo</div>
     </div>
+    <div class="img-prev" id="img-prev" style="display:none"><img id="img-prev-img" src="" alt=""/></div>
+    <div class="analyze-bar" id="analyze-bar"><p>Photo ready. AI can analyze it to pre-fill visual fields.</p><button class="btn btn-accent" id="analyze-btn" onclick="analyzePhoto()">Analyze ✦</button></div>
+    <div class="status" id="photo-status"></div>
   </div>
   <!-- §2 Identity -->
   <div class="fsection">
@@ -394,7 +386,7 @@ const FL={1:'Loungewear',2:'Casual',3:'Weekend casual',4:'Smart casual',5:'Smart
 const EMOJI={'Clothing':'🧺','Shoes':'👟','Bags':'👜','Accessories':'💍','Jewelry':'💎','Activewear':'🏃','Swimwear':'🌊','Lingerie & Loungewear':'🌙'};
 
 let closetData={version:'1.0',schema_updated:'2026-04-07',owner_id:null,items:[],outfits:[]};
-let editingId=null,occasions=[],feels=[],tags=[],photoBase64=null,photoMime='image/jpeg',currentMode='url';
+let editingId=null,occasions=[],feels=[],tags=[],photoBase64=null,photoMime='image/jpeg';
 window._fetchedImageUrl=null;
 
 // Worker connection
@@ -442,7 +434,6 @@ function renderList(){
 }
 
 // Mode
-function setMode(m){currentMode=m;document.getElementById('mode-url').style.display=m==='url'?'block':'none';document.getElementById('mode-manual').style.display=m==='manual'?'block':'none';document.getElementById('mode-url-btn').classList.toggle('active',m==='url');document.getElementById('mode-manual-btn').classList.toggle('active',m==='manual');}
 
 // Taxonomy dropdowns
 function onDeptChange(){
@@ -597,7 +588,8 @@ async function fetchFromURL(){
 function buildRecord(id){
   const now=new Date().toISOString(),itemId=id||crypto.randomUUID();
   const isV=document.getElementById('is-vintage').checked;
-  let ext='jpg';if(photoMime==='image/webp')ext='webp';else if(photoMime==='image/png')ext='png';else if(photoMime==='image/avif')ext='avif';
+  let ext='jpg';
+  if(photoBase64){if(photoMime==='image/webp')ext='webp';else if(photoMime==='image/png')ext='png';else if(photoMime==='image/avif')ext='avif';}
   else if(window._fetchedImageUrl){const e=window._fetchedImageUrl.split('?')[0].split('.').pop().toLowerCase();if(['jpg','jpeg','webp','png','avif'].includes(e))ext=e==='jpeg'?'jpg':e;}
   let fn=itemId+'.'+ext,fmt=ext;
   if(id&&!photoBase64&&!window._fetchedImageUrl){const ex=closetData.items.find(i=>i.id===id);if(ex&&ex.image&&ex.image.filename){fn=ex.image.filename;fmt=ex.image.format;}}
