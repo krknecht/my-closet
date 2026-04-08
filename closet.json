@@ -6,11 +6,11 @@
     {
       "id": "dc4574de-971c-482b-9c56-3eeedc8666a9",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-07T00:00:00Z",
+      "updated_at": "2026-04-08T21:56:40.663Z",
       "status": "active",
       "identity": {
         "name": "Mid-Rise Straight Jeans",
-        "brand": "ChloÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ©",
+        "brand": "Chloe",
         "collection_season": null,
         "year_acquired": 2026,
         "vintage": {
@@ -40,10 +40,10 @@
         "print_description": null,
         "silhouette": null,
         "length": "Ankle",
+        "sleeve_length": "Long sleeve",
         "embellishment": [
           "None"
-        ],
-        "sleeve_length": null
+        ]
       },
       "construction": {
         "fabric": [
@@ -92,14 +92,14 @@
         "source_url": "https://www.mytheresa.com/us/en/women/chloe-straight-jeans-pink-p01130765",
         "purchase_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "retail_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "condition_at_acquisition": "New with tags",
-        "current_condition": "Excellent",
+        "current_condition": "Good",
         "storage_location": null,
         "acquisition_type": "Purchased"
       },
@@ -121,7 +121,8 @@
           "ChloÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ©"
         ],
         "notes": null,
-        "claude_context": null
+        "claude_context": null,
+        "rotation": null
       }
     },
     {
