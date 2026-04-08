@@ -1,0 +1,3078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Closet — Item Card Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1c1917;
+  --ink-2: #57534e;
+  --ink-3: #a8a29e;
+  --paper: #faf9f7;
+  --paper-2: #f2f0ec;
+  --paper-3: #e8e5df;
+  --rule: #ddd9d2;
+  --accent: #2d4a2d;
+  --accent-light: #e8f0e8;
+  --accent-mid: #4a7c4a;
+  --gold: #8b6914;
+  --gold-light: #f5edd6;
+  --warn: #7c3d2a;
+  --warn-light: #f5e8e3;
+  --blue: #1e3a5f;
+  --blue-light: #e3ecf5;
+  --radius: 4px;
+  --radius-lg: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Mono', monospace;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.4;
+}
+
+/* Top rule */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-mid) 50%, transparent 100%);
+  z-index: 100;
+  pointer-events: none;
+}
+
+header {
+  border-bottom: 1px solid var(--rule);
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  background: var(--paper);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.header-subtitle {
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.mode-tabs {
+  margin-left: auto;
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.mode-tab {
+  padding: 6px 16px;
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mode-tab.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.mode-tab:not(:last-child) {
+  border-right: 1px solid var(--rule);
+}
+
+/* Layout */
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: calc(100vh - 61px);
+}
+
+@media (max-width: 800px) {
+  .app { grid-template-columns: 1fr; }
+  header { padding: 1rem; gap: 0.75rem; }
+  .header-subtitle { display: none; }
+}
+
+/* Left panel — intake */
+.intake-panel {
+  border-right: 1px solid var(--rule);
+  overflow-y: auto;
+  max-height: calc(100vh - 61px);
+  position: relative;
+  isolation: isolate;
+}
+
+/* Right panel — output */
+.output-panel {
+  overflow-y: auto;
+  max-height: calc(100vh - 61px);
+  background: var(--paper-2);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Section anatomy */
+.section {
+  border-bottom: 1px solid var(--rule);
+  padding: 1.5rem 2rem;
+  animation: fadein 0.3s ease both;
+}
+
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.25rem;
+}
+
+.section-num {
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  min-width: 18px;
+}
+
+.section-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.section-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+/* Fields */
+.field { margin-bottom: 14px; }
+.field:last-child { margin-bottom: 0; }
+
+.field-label {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.autofill-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent-mid);
+  display: none;
+}
+
+.field input[type=text],
+.field input[type=url],
+.field select,
+.field textarea {
+  width: 100%;
+  font-size: 13px;
+  font-family: 'DM Mono', monospace;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  transition: border-color 0.15s, background 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--ink-3);
+  background: #fff;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 62px;
+  line-height: 1.6;
+}
+
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a8a29e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 30px;
+  cursor: pointer;
+}
+
+.autofilled input,
+.autofilled select,
+.autofilled textarea {
+  border-color: var(--accent-mid) !important;
+  background: var(--accent-light) !important;
+}
+
+.autofilled .autofill-dot { display: inline-block; }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+/* URL import bar */
+.import-bar {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.import-bar input {
+  flex: 1;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  padding: 9px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  transition: border-color 0.15s;
+}
+
+.import-bar input:focus {
+  outline: none;
+  border-color: var(--ink-3);
+  background: #fff;
+}
+
+/* Buttons */
+.btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 9px 16px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn:hover { background: var(--paper-3); border-color: var(--ink-3); color: var(--ink); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.btn-primary:hover { background: var(--ink-2); border-color: var(--ink-2); color: var(--paper); }
+
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.btn-accent:hover { background: var(--accent-mid); border-color: var(--accent-mid); }
+
+.btn-full { width: 100%; padding: 12px; font-size: 11px; }
+
+/* Status */
+.status {
+  font-size: 11px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  margin-top: 10px;
+  line-height: 1.5;
+  display: none;
+  border-left: 3px solid transparent;
+}
+
+.status.loading { display: block; background: var(--blue-light); color: var(--blue); border-left-color: var(--blue); }
+.status.success { display: block; background: var(--accent-light); color: var(--accent); border-left-color: var(--accent-mid); }
+.status.warn { display: block; background: var(--gold-light); color: var(--gold); border-left-color: var(--gold); }
+.status.error { display: block; background: var(--warn-light); color: var(--warn); border-left-color: var(--warn); }
+
+/* Mode panel */
+.mode-panel { display: none; }
+.mode-panel.active { display: block; }
+
+/* Image section */
+.img-upload-zone {
+  border: 1.5px dashed var(--rule);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  background: var(--paper);
+}
+
+.img-upload-zone:hover, .img-upload-zone.drag-over {
+  border-color: var(--accent-mid);
+  background: var(--accent-light);
+}
+
+.img-upload-zone input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.img-upload-label {
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.img-upload-label span {
+  display: block;
+  font-size: 24px;
+  margin-bottom: 8px;
+  opacity: 0.4;
+}
+
+/* Image preview */
+.img-preview-panel {
+  display: none;
+  margin-top: 12px;
+}
+
+.img-preview-wrap {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--paper-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  max-height: 340px;
+  position: relative;
+}
+
+.img-preview-wrap img {
+  max-width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  display: block;
+}
+
+.img-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 0 4px;
+  scrollbar-width: none;
+}
+
+.img-strip::-webkit-scrollbar { display: none; }
+
+.img-strip img {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.img-strip img.selected { border-color: var(--accent-mid); }
+.img-strip img:hover { border-color: var(--ink-3); }
+
+.img-filename-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.img-filename-row input {
+  flex: 1;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  padding: 7px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.img-filename-row input:focus {
+  outline: none;
+  border-color: var(--ink-3);
+}
+
+.img-note {
+  font-size: 10px;
+  color: var(--ink-3);
+  margin-top: 6px;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+}
+
+/* Season checkboxes */
+.season-row {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.season-option {
+  flex: 1;
+  position: relative;
+}
+
+.season-option input[type=checkbox] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.season-option label {
+  display: block;
+  text-align: center;
+  padding: 8px 4px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all 0.15s;
+  border-right: 1px solid var(--rule);
+  user-select: none;
+}
+
+.season-option:last-child label { border-right: none; }
+
+.season-option input:checked + label {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.season-option label:hover { background: var(--paper-3); color: var(--ink); }
+.season-option input:checked + label:hover { background: var(--ink-2); }
+
+/* Formality */
+.formality-grid {
+  display: grid;
+  grid-template-columns: 32px 1fr 28px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.form-lbl { font-size: 10px; color: var(--ink-3); letter-spacing: 0.06em; }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 2px;
+  background: var(--rule);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 0 1px var(--ink);
+  transition: transform 0.15s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.form-val { font-size: 12px; font-weight: 500; text-align: center; }
+
+.form-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  margin-top: -4px;
+  margin-bottom: 8px;
+  padding: 0 16px;
+}
+
+.form-desc {
+  font-size: 11px;
+  color: var(--ink-2);
+  padding: 8px 10px;
+  background: var(--paper-2);
+  border-radius: var(--radius);
+  border-left: 2px solid var(--ink-3);
+  letter-spacing: 0.02em;
+}
+
+/* Tags */
+.tags-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 28px;
+  margin-bottom: 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  background: var(--paper-3);
+  border: 1px solid var(--rule);
+  border-radius: 20px;
+  font-size: 11px;
+  color: var(--ink-2);
+  letter-spacing: 0.04em;
+}
+
+.tag button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-3);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.1s;
+}
+
+.tag button:hover { color: var(--ink); }
+
+.tag-row {
+  display: flex;
+  gap: 6px;
+}
+
+.tag-row input {
+  flex: 1;
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  padding: 7px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.tag-row input:focus { outline: none; border-color: var(--ink-3); }
+
+/* AI Vision analyze button */
+.vision-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--accent-light);
+  border-radius: var(--radius);
+  margin-top: 8px;
+  border: 1px solid #c5d9c5;
+}
+
+.vision-bar p {
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* Output panel */
+.output-header {
+  padding: 1.5rem 2rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.output-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.filename-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  background: var(--gold-light);
+  color: var(--gold);
+  border-radius: 20px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  border: 1px solid #ddc98a;
+}
+
+.output-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.copied-flash {
+  font-size: 10px;
+  color: var(--accent-mid);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.copied-flash.show { opacity: 1; }
+
+.preview-box {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+}
+
+.preview-placeholder {
+  color: var(--ink-3);
+  font-size: 12px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  line-height: 1.8;
+  padding: 2rem 0;
+}
+
+.preview-placeholder strong {
+  font-family: 'DM Mono', monospace;
+  font-style: normal;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-3);
+}
+
+/* Markdown preview decorations */
+.md-h1 { color: var(--ink); font-size: 14px; font-weight: 500; }
+.md-h2 { color: var(--ink-2); font-size: 12px; font-weight: 500; margin-top: 4px; }
+.md-bullet { color: var(--ink-3); }
+.md-value { color: var(--ink); }
+
+/* AI analysis overlay */
+.ai-analyzing {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(250,249,247,0.92);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: var(--radius-lg);
+  z-index: 10;
+}
+
+.ai-analyzing.show { display: flex; }
+
+.ai-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--rule);
+  border-top-color: var(--accent-mid);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.ai-analyzing p {
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Generate button */
+.generate-section {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+  letter-spacing: 0.06em;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-mid);
+}
+
+
+/* Export checklist modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(28,25,23,0.5);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(28,25,23,0.15);
+}
+
+.modal-header {
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--ink);
+}
+
+.modal-subtitle {
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.06em;
+  flex: 1;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--ink-3);
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+  margin-left: auto;
+}
+.modal-close:hover { color: var(--ink); }
+
+.modal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-intro {
+  font-size: 11px;
+  color: var(--ink-2);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+  padding: 10px 12px;
+  background: var(--gold-light);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius);
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  transition: border-color 0.15s;
+}
+
+.checklist-item.no-image {
+  background: var(--warn-light);
+  border-color: #e8c8be;
+}
+
+.checklist-item-name {
+  flex: 1;
+  font-size: 11px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.checklist-filename {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-3);
+  background: var(--paper-2);
+  padding: 3px 7px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.copy-fn-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.copy-fn-btn:hover { background: var(--paper-3); color: var(--ink); border-color: var(--ink-3); }
+.copy-fn-btn.copied { background: var(--accent-light); color: var(--accent); border-color: var(--accent-mid); }
+
+.no-image-badge {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warn);
+  background: var(--warn-light);
+  padding: 2px 7px;
+  border-radius: 20px;
+  border: 1px solid #e8c8be;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.modal-note {
+  font-size: 10px;
+  color: var(--ink-3);
+  line-height: 1.6;
+  flex: 1;
+}
+
+/* Gallery panel */
+.gallery-panel {
+  border-top: 1px solid var(--rule);
+  background: var(--paper);
+  flex-shrink: 0;
+}
+
+.gallery-header {
+  padding: 1rem 2rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gallery-header:hover .gallery-toggle { color: var(--ink); }
+
+.gallery-label {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.gallery-count {
+  display: inline-block;
+  padding: 2px 7px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 20px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  min-width: 22px;
+  text-align: center;
+}
+
+.gallery-toggle {
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+
+.gallery-export-btn {
+  margin-left: 10px;
+}
+
+.gallery-body {
+  padding: 0 2rem 1.5rem;
+  display: none;
+}
+
+.gallery-body.open { display: block; }
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.gallery-thumb {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--paper-2);
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+  position: relative;
+}
+
+.gallery-thumb:hover { border-color: var(--ink-3); transform: translateY(-1px); }
+
+.gallery-thumb img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  display: block;
+  background: var(--paper-3);
+}
+
+.gallery-thumb-placeholder {
+  width: 100%;
+  aspect-ratio: 3/4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: var(--paper-3);
+  color: var(--ink-3);
+}
+
+.gallery-thumb-label {
+  padding: 4px 6px;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+
+.gallery-thumb-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: rgba(28,25,23,0.7);
+  border: none;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-thumb:hover .gallery-thumb-remove { display: flex; }
+
+.gallery-empty {
+  font-size: 11px;
+  color: var(--ink-3);
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  line-height: 1.7;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.gallery-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* GitHub settings */
+.gh-settings-btn {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.gh-settings-btn:hover { background: var(--paper-3); color: var(--ink); border-color: var(--ink-3); }
+.gh-settings-btn.connected { color: var(--accent-mid); border-color: var(--accent-mid); background: var(--accent-light); }
+
+.gh-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  flex-shrink: 0;
+}
+.gh-settings-btn.connected .gh-dot { background: var(--accent-mid); }
+
+/* GitHub push status in modal */
+.push-status {
+  font-size: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  margin-top: 10px;
+  display: none;
+  border-left: 3px solid transparent;
+  line-height: 1.5;
+}
+.push-status.loading { display: block; background: var(--blue-light); color: var(--blue); border-left-color: var(--blue); }
+.push-status.success { display: block; background: var(--accent-light); color: var(--accent); border-left-color: var(--accent-mid); }
+.push-status.error { display: block; background: var(--warn-light); color: var(--warn); border-left-color: var(--warn); }
+
+.push-all-btn {
+  margin-left: auto;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .section { padding: 1.25rem 1.25rem; }
+  .output-header { padding: 1rem 1.25rem 0.75rem; }
+  .preview-box { padding: 1.25rem; }
+  .generate-section { padding: 1rem 1.25rem; }
+  header { flex-wrap: wrap; }
+  .mode-tabs { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">Closet</div>
+    <div class="header-subtitle">Item Card Generator — v3</div>
+  </div>
+  <button class="gh-settings-btn" id="gh-settings-btn" onclick="openGHSettings()">
+    <span class="gh-dot"></span>
+    <span id="gh-settings-label">GitHub</span>
+  </button>
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="switchMode('url')" id="tab-url">URL Import</button>
+    <button class="mode-tab" onclick="switchMode('manual')" id="tab-manual">Manual Entry</button>
+    <button class="mode-tab" onclick="switchMode('photo')" id="tab-photo">From Photo</button>
+  </div>
+</header>
+
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════════
+       LEFT PANEL — INTAKE
+  ═══════════════════════════════════════════════ -->
+  <div class="intake-panel">
+
+    <!-- ── MODE: URL IMPORT ── -->
+    <div class="mode-panel active" id="mode-url">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">01</span>
+          <span class="section-label">Import from product page</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="import-bar">
+          <input id="pdp-url" type="url" placeholder="Paste a product page URL…" />
+          <button class="btn btn-primary" id="fetch-btn" onclick="fetchFromURL()">Look up ↗</button>
+        </div>
+        <div class="status" id="fetch-status"></div>
+        <div class="legend" id="legend" style="display:none">
+          <span class="legend-dot"></span> Green fields were auto-filled — review and adjust as needed
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MODE: MANUAL ENTRY ── -->
+    <div class="mode-panel" id="mode-manual">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">01</span>
+          <span class="section-label">Manual photo entry</span>
+          <span class="section-rule"></span>
+        </div>
+        <p style="font-size:11px;color:var(--ink-3);line-height:1.7;margin-bottom:12px;">
+          For items without a product page — vintage, gifted, or offline. Upload a photo to let AI pre-fill visual details.
+        </p>
+        <div class="img-upload-zone" id="manual-upload-zone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <input type="file" id="manual-photo" accept="image/*" onchange="onManualPhotoSelected(event)" />
+          <div class="img-upload-label">
+            <span>📷</span>
+            Drag & drop or click to upload item photo
+          </div>
+        </div>
+        <div class="vision-bar" id="vision-bar" style="display:none">
+          <p>Photo uploaded. AI can analyze it to pre-fill color, pattern, silhouette & fabric weight.</p>
+          <button class="btn btn-accent" id="analyze-btn" onclick="analyzePhoto()">Analyze ✦</button>
+        </div>
+        <div class="status" id="photo-status"></div>
+      </div>
+    </div>
+
+    <!-- ── MODE: FROM PHOTO (Outfit / Inspo) ── -->
+    <div class="mode-panel" id="mode-photo">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">01</span>
+          <span class="section-label">Style capture</span>
+          <span class="section-rule"></span>
+        </div>
+        <p style="font-size:11px;color:var(--ink-3);line-height:1.7;margin-bottom:12px;">
+          Upload a selfie, outfit photo, or inspiration image. Claude will analyze the style and generate a note for your style profile — not an item card.
+        </p>
+        <div class="img-upload-zone" id="style-upload-zone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onStyleDrop(event)">
+          <input type="file" id="style-photo" accept="image/*" onchange="onStylePhotoSelected(event)" />
+          <div class="img-upload-label">
+            <span>🪞</span>
+            Upload selfie, outfit, or inspiration image
+          </div>
+        </div>
+        <div class="field" style="margin-top:12px;" id="style-occasion-field" style="display:none">
+          <label class="field-label">Occasion / context (optional)</label>
+          <input type="text" id="style-occasion" placeholder="e.g. Client lunch, weekend errands, date night…" />
+        </div>
+        <button class="btn btn-accent" id="style-analyze-btn" onclick="analyzeStylePhoto()" style="display:none;margin-top:10px;width:100%">Analyze style ✦</button>
+        <div class="status" id="style-status"></div>
+        <div id="style-output" style="display:none;margin-top:12px;">
+          <div style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px;">Style note generated</div>
+          <div id="style-note-box" style="background:var(--paper-2);border:1px solid var(--rule);border-radius:var(--radius-lg);padding:1rem;font-size:12px;line-height:1.8;color:var(--ink-2);white-space:pre-wrap;"></div>
+          <button class="btn" onclick="copyStyleNote()" style="margin-top:8px;">Copy note</button>
+          <p style="font-size:10px;color:var(--ink-3);margin-top:6px;line-height:1.6;">Copy and paste into your <code>style-profile.md</code> or <code>outfit-log.md</code> in your Claude Project.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SHARED FIELDS (URL + Manual modes) ═══ -->
+    <div id="shared-fields">
+
+      <!-- Image panel (URL mode only — shown after fetch) -->
+      <div class="section" id="image-section" style="display:none">
+        <div class="section-header">
+          <span class="section-num">02</span>
+          <span class="section-label">Product image</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="img-preview-panel" id="img-preview-panel" style="display:block">
+          <div class="img-preview-wrap" id="img-preview-wrap">
+            <div class="ai-analyzing" id="img-ai-overlay">
+              <div class="ai-spinner"></div>
+              <p>Fetching image…</p>
+            </div>
+            <img id="img-preview" src="" alt="" style="display:none" />
+          </div>
+          <div class="img-strip" id="img-strip"></div>
+          <div class="img-filename-row">
+            <input type="text" id="image-filename" placeholder="filename.jpg" />
+            <button class="btn" onclick="downloadImage()">Save ↓</button>
+          </div>
+          <p class="img-note">Save this image, then upload it to your Claude Project in <code>/closet/</code> alongside the <code>.md</code> card.<br><span style="color:var(--gold)">If preview is blocked: open this file via a local server (<code>npx serve .</code>) instead of double-clicking it, or use the ↗ link to open the image and right-click to save.</span></p>
+        </div>
+      </div>
+
+      <!-- Manual photo preview (manual mode) -->
+      <div class="section" id="manual-image-section" style="display:none">
+        <div class="section-header">
+          <span class="section-num">02</span>
+          <span class="section-label">Item image</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="img-preview-wrap" id="manual-img-wrap" style="max-height:260px;">
+          <img id="manual-img-preview" src="" alt="" style="max-height:260px;" />
+        </div>
+        <div class="img-filename-row" style="margin-top:8px;">
+          <input type="text" id="manual-image-filename" placeholder="filename.jpg" />
+        </div>
+        <p class="img-note">Upload this image to your Claude Project in <code>/closet/</code>.</p>
+      </div>
+
+      <!-- Identity -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num" id="id-num">03</span>
+          <span class="section-label">Identity</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="field" id="f-name">
+          <div class="field-label"><span class="autofill-dot"></span>Item name</div>
+          <input type="text" id="name" placeholder="e.g. Navy Wool Blazer" oninput="onNameInput()" />
+        </div>
+        <div class="row2">
+          <div class="field" id="f-category">
+            <div class="field-label"><span class="autofill-dot"></span>Category</div>
+            <select id="category" onchange="onCategoryChange()">
+              <option value="">—</option>
+              <option>Top</option><option>Bottom</option><option>Outerwear</option>
+              <option>Dress / Jumpsuit</option><option>Shoes</option><option>Accessory</option><option>Bag</option>
+            </select>
+          </div>
+          <div class="field" id="subcat-field">
+            <div class="field-label"><span class="autofill-dot"></span>Subcategory</div>
+            <select id="subcategory" onchange="onSubcategoryChange()"><option value="">—</option></select>
+          </div>
+        </div>
+        <div class="field" id="f-brand">
+          <div class="field-label"><span class="autofill-dot"></span>Brand</div>
+          <input type="text" id="brand" placeholder="e.g. J.Crew" oninput="onNameInput()" />
+        </div>
+      </div>
+
+      <!-- Visual -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">04</span>
+          <span class="section-label">Visual</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="row2">
+          <div class="field" id="f-color">
+            <div class="field-label"><span class="autofill-dot"></span>Primary color</div>
+            <input type="text" id="color" placeholder="e.g. Navy (medium)" />
+          </div>
+          <div class="field" id="f-color2">
+            <div class="field-label"><span class="autofill-dot"></span>Secondary color</div>
+            <input type="text" id="color2" placeholder="e.g. White (trim)" />
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field" id="f-pattern">
+            <div class="field-label"><span class="autofill-dot"></span>Pattern</div>
+            <select id="pattern">
+              <option value="">—</option>
+              <option>Solid</option><option>Stripe</option><option>Plaid / Check</option>
+              <option>Floral</option><option>Geometric</option><option>Animal print</option>
+              <option>Abstract</option><option>Graphic</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field" id="f-silhouette">
+            <div class="field-label"><span class="autofill-dot"></span>Silhouette / shape</div>
+            <input type="text" id="silhouette" placeholder="e.g. Structured, hits at hip" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Construction -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">05</span>
+          <span class="section-label">Construction</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="row2">
+          <div class="field" id="f-fabric">
+            <div class="field-label"><span class="autofill-dot"></span>Fabric / Material</div>
+            <input type="text" id="fabric" placeholder="e.g. 80% wool, 20% poly" />
+          </div>
+          <div class="field" id="f-weight">
+            <div class="field-label"><span class="autofill-dot"></span>Weight</div>
+            <select id="weight">
+              <option value="">—</option>
+              <option>Lightweight</option><option>Medium</option><option>Medium-heavy</option><option>Heavy</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Season</div>
+          <div class="season-row">
+            <div class="season-option"><input type="checkbox" id="s-spring" /><label for="s-spring">Spring</label></div>
+            <div class="season-option"><input type="checkbox" id="s-summer" /><label for="s-summer">Summer</label></div>
+            <div class="season-option"><input type="checkbox" id="s-fall" /><label for="s-fall">Fall</label></div>
+            <div class="season-option"><input type="checkbox" id="s-winter" /><label for="s-winter">Winter</label></div>
+          </div>
+        </div>
+        <div class="field" id="f-care">
+          <div class="field-label"><span class="autofill-dot"></span>Care instructions</div>
+          <textarea id="care" placeholder="e.g. Dry clean only · Do not bleach · Cool iron"></textarea>
+        </div>
+      </div>
+
+      <!-- Fit -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">06</span>
+          <span class="section-label">Fit</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="field" id="f-cut">
+          <div class="field-label"><span class="autofill-dot"></span>Cut / fit style</div>
+          <select id="cut">
+            <option value="">—</option>
+            <option>Slim / Tailored</option><option>Standard / Regular</option>
+            <option>Relaxed</option><option>Oversized</option><option>Cropped</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <div class="field-label">My size in this</div>
+            <input type="text" id="size" placeholder="e.g. 38R, M, 32×30" />
+          </div>
+          <div class="field">
+            <div class="field-label">Inseam / length</div>
+            <input type="text" id="inseam" placeholder='e.g. 30", ankle, midi' />
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Fit notes</div>
+          <textarea id="fitnotes" placeholder="e.g. Runs large, size down · Slightly long in sleeve"></textarea>
+        </div>
+      </div>
+
+      <!-- Formality -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">07</span>
+          <span class="section-label">Formality range</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="formality-grid">
+          <span class="form-lbl">Min</span>
+          <input type="range" id="form-low" min="1" max="10" step="1" value="3" oninput="updateFormality()" />
+          <span class="form-val" id="form-low-val">3</span>
+        </div>
+        <div class="formality-grid">
+          <span class="form-lbl">Max</span>
+          <input type="range" id="form-high" min="1" max="10" step="1" value="7" oninput="updateFormality()" />
+          <span class="form-val" id="form-high-val">7</span>
+        </div>
+        <div class="form-scale">
+          <span>1 Loungewear</span><span>5 Smart casual</span><span>10 Black tie</span>
+        </div>
+        <div class="form-desc" id="form-desc"></div>
+      </div>
+
+      <!-- Wearing profile -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">08</span>
+          <span class="section-label">Wearing profile</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="field">
+          <div class="field-label">Occasions I actually wear it</div>
+          <input type="text" id="occasions" placeholder="e.g. Client meetings, dinners, date nights" />
+        </div>
+        <div class="field">
+          <div class="field-label">Feels / mood when wearing</div>
+          <input type="text" id="feels" placeholder="e.g. Confident, polished, put-together" />
+        </div>
+        <div class="field">
+          <div class="field-label">Style notes</div>
+          <textarea id="stylenotes" placeholder="e.g. Pairs well with white Oxford and loafers · Avoid with athletic shoes"></textarea>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">09</span>
+          <span class="section-label">Tags</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="tags-wrap" id="tags-wrap"></div>
+        <div class="tag-row">
+          <input type="text" id="tag-input" placeholder="Add a tag and press Enter…"
+            onkeydown="if(event.key==='Enter'){addTag();event.preventDefault()}" />
+          <button class="btn" onclick="addTag()">Add</button>
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-num">10</span>
+          <span class="section-label">Metadata</span>
+          <span class="section-rule"></span>
+        </div>
+        <div class="row3">
+          <div class="field">
+            <div class="field-label">Acquired</div>
+            <input type="text" id="acquired" placeholder="e.g. 2024" />
+          </div>
+          <div class="field">
+            <div class="field-label">Condition</div>
+            <select id="condition">
+              <option value="">—</option>
+              <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">Rotation</div>
+            <select id="rotation">
+              <option value="">—</option>
+              <option>High</option><option>Medium</option><option>Low</option><option>Rarely</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <div class="field-label">Purchase price (optional)</div>
+          <input type="text" id="price" placeholder="e.g. $180" />
+        </div>
+      </div>
+
+      <!-- Generate button -->
+      <div class="generate-section">
+        <button class="btn btn-accent btn-full" onclick="generate()">Generate card ↓</button>
+      </div>
+
+    </div><!-- /shared-fields -->
+
+  </div><!-- /intake-panel -->
+
+
+  <!-- ═══════════════════════════════════════════════
+       RIGHT PANEL — OUTPUT
+  ═══════════════════════════════════════════════ -->
+  <div class="output-panel">
+    <div class="output-header">
+      <span class="output-label">Generated card</span>
+      <div id="filename-chip-wrap"></div>
+      <div class="output-actions">
+        <span class="copied-flash" id="copied-flash">Copied</span>
+        <button class="btn" id="copy-btn" onclick="copyCard()" style="display:none">Copy markdown</button>
+        <button class="btn" id="download-md-btn" onclick="downloadCard()" style="display:none">Download .md</button>
+        <button class="btn btn-primary" id="add-gallery-btn" onclick="addToGallery()" style="display:none">+ Add to gallery</button>
+      </div>
+    </div>
+    <div class="preview-box" id="preview">
+      <div class="preview-placeholder">
+        <strong>How to use</strong>
+        Choose a mode above:<br>
+        → <em>URL Import</em> — paste a product page link and auto-fill all fields<br>
+        → <em>Manual Entry</em> — upload a photo for AI visual analysis<br>
+        → <em>From Photo</em> — capture an outfit or inspiration image for your style profile<br><br>
+        Then complete the personal fields (size, occasions, formality) and click <em>Generate card</em>.
+      </div>
+    </div>
+
+    <!-- ── GALLERY LIBRARY ── -->
+    <div class="gallery-panel">
+      <div class="gallery-header" onclick="toggleGallery()">
+        <span class="gallery-label">Visual library</span>
+        <span class="gallery-count" id="gallery-count">0</span>
+        <span class="gallery-toggle" id="gallery-toggle">Show ↓</span>
+      </div>
+      <div class="gallery-body" id="gallery-body">
+        <div class="gallery-grid" id="gallery-grid">
+          <div class="gallery-empty" id="gallery-empty">
+            Generate a card and click <em>+ Add to gallery</em> to build your visual closet library.<br>
+            When ready, export as a self-contained HTML page you can host anywhere.
+          </div>
+        </div>
+        <div class="gallery-actions" id="gallery-actions" style="display:none">
+          <button class="btn btn-accent" onclick="exportGallery()">Export &amp; push to GitHub ↑</button>
+          <button class="btn" onclick="clearGallery()">Clear all</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /app -->
+
+<!-- ═══ GITHUB SETTINGS MODAL ═══ -->
+<div class="modal-overlay" id="gh-modal" onclick="if(event.target===this)closeGHSettings()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">GitHub settings</span>
+      <button class="modal-close" onclick="closeGHSettings()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-intro">
+        Your token is saved only in this browser and sent directly to GitHub's API — it never passes through any server or conversation. Generate a token at github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) with <strong>repo</strong> scope checked.
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <div class="field-label">GitHub username or email</div>
+        <input type="text" id="gh-username" placeholder="e.g. katerknecht" autocomplete="off" />
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <div class="field-label">Repository name</div>
+        <input type="text" id="gh-repo" placeholder="e.g. my-closet" autocomplete="off" />
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <div class="field-label">Personal access token</div>
+        <input type="password" id="gh-token" placeholder="ghp_…" autocomplete="off" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span class="modal-note">Stored in browser localStorage — clears if you clear browser data.</span>
+      <button class="btn" onclick="clearGHSettings()" style="color:var(--warn)">Clear</button>
+      <button class="btn btn-accent" onclick="saveGHSettings()">Save &amp; connect</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EXPORT CHECKLIST MODAL ═══ -->
+<div class="modal-overlay" id="export-modal" onclick="if(event.target===this)closeExportModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Image checklist</span>
+      <button class="modal-close" onclick="closeExportModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-intro" id="checklist-intro">
+        For each item, copy the exact filename and save the image from the retailer's site using that name. Then upload all images to your GitHub repository.
+      </div>
+      <div class="checklist" id="export-checklist"></div>
+      <div class="push-status" id="push-status"></div>
+    </div>
+    <div class="modal-footer">
+      <span class="modal-note">Items without a GitHub image will show a placeholder — card data is always included.</span>
+      <button class="btn" onclick="doExportGallery()">Download index.html ↓</button>
+      <button class="btn btn-accent push-all-btn" id="push-all-btn" onclick="pushAllToGitHub()" style="display:none">Push all to GitHub ↑</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+
+const SUBCATS = {
+  'Top': ['T-shirt','Shirt / Button-down','Polo','Sweater / Knitwear','Sweatshirt / Hoodie','Tank / Cami','Blouse','Henley','Turtleneck','Vest / Gilet'],
+  'Bottom': ['Trousers','Jeans','Chinos','Shorts','Skirt','Joggers / Sweatpants','Leggings','Cargo pants'],
+  'Outerwear': ['Blazer','Suit jacket','Sport coat','Overcoat / Topcoat','Trench coat','Down jacket / Puffer','Leather jacket','Denim jacket','Bomber','Raincoat / Windbreaker','Cardigan'],
+  'Dress / Jumpsuit': ['Mini dress','Midi dress','Maxi dress','Wrap dress','Shirt dress','Slip dress','Jumpsuit','Romper'],
+  'Shoes': ['Sneakers','Oxford / Derby','Loafer','Chelsea boot','Ankle boot','Tall boot','Sandal','Mule / Slide','Monk strap','Trainer'],
+  'Accessory': ['Belt','Watch','Sunglasses','Hat / Cap','Scarf / Wrap','Tie / Bow tie','Pocket square','Jewellery','Socks','Gloves'],
+  'Bag': ['Backpack','Tote','Messenger / Crossbody','Briefcase','Duffle','Clutch','Shoulder bag','Belt bag / Fanny pack']
+};
+
+const CUTS = {
+  'Jeans': ['Skinny','Slim','Straight','Relaxed / Regular','Wide leg','Bootcut','Flare','Cropped','Tapered','Barrel'],
+  'Trousers': ['Slim','Tailored / Tapered','Straight','Relaxed','Wide leg','Pleated','Cropped','Flare'],
+  'Chinos': ['Slim','Straight','Relaxed','Tapered','Cropped'],
+  'Shorts': ['Slim / Tailored','Regular','Relaxed','Bermuda','Athletic'],
+  'Skirt': ['Mini','Midi','Maxi','Pencil','A-line','Wrap','Pleated','Asymmetric'],
+  'Leggings': ['Fitted','High-waist','Cropped / Capri'],
+  'Joggers / Sweatpants': ['Slim / Tapered','Regular','Wide leg'],
+  'Cargo pants': ['Slim','Regular','Relaxed','Wide leg'],
+  'T-shirt': ['Fitted','Regular','Relaxed','Oversized','Cropped','Longline'],
+  'Shirt / Button-down': ['Slim','Regular','Relaxed','Oversized','Cropped'],
+  'Polo': ['Slim','Regular','Relaxed'],
+  'Sweater / Knitwear': ['Fitted','Regular','Relaxed','Oversized','Cropped'],
+  'Sweatshirt / Hoodie': ['Regular','Relaxed','Oversized','Cropped'],
+  'Tank / Cami': ['Fitted','Regular','Relaxed','Cropped'],
+  'Blouse': ['Fitted','Regular','Relaxed','Oversized'],
+  'Turtleneck': ['Slim','Regular','Oversized'],
+  'Vest / Gilet': ['Slim','Regular','Relaxed'],
+  'Henley': ['Slim','Regular','Relaxed','Oversized'],
+  'Blazer': ['Slim / Tailored','Regular','Relaxed','Oversized','Cropped','Double-breasted'],
+  'Suit jacket': ['Slim','Regular','Relaxed'],
+  'Sport coat': ['Slim','Regular','Relaxed'],
+  'Overcoat / Topcoat': ['Slim','Regular','Relaxed','Oversized'],
+  'Trench coat': ['Slim','Regular','Relaxed','Oversized','Cropped'],
+  'Down jacket / Puffer': ['Regular','Relaxed','Cropped','Long'],
+  'Leather jacket': ['Slim','Regular','Relaxed','Oversized','Cropped'],
+  'Denim jacket': ['Slim','Regular','Relaxed','Oversized','Cropped'],
+  'Bomber': ['Slim','Regular','Relaxed','Oversized','Cropped'],
+  'Raincoat / Windbreaker': ['Regular','Relaxed','Oversized'],
+  'Cardigan': ['Fitted','Regular','Relaxed','Oversized','Cropped','Longline'],
+  'Sneakers': ['Low-top','High-top','Mid-top','Slip-on'],
+  'Oxford / Derby': ['Cap toe','Wingtip / Brogue','Plain toe'],
+  'Loafer': ['Penny','Tassel','Horsebit','Snaffle bit'],
+  'Chelsea boot': ['Slim','Regular','Chunky sole'],
+  'Ankle boot': ['Slim','Regular','Chunky sole','Heeled'],
+  'Tall boot': ['Slim','Regular','Over-the-knee'],
+  'Sandal': ['Flat','Heeled','Sporty / Athletic','Strappy'],
+  'Mule / Slide': ['Flat','Heeled','Backless'],
+  'Monk strap': ['Single monk','Double monk'],
+  'Trainer': ['Low-top','High-top','Mid-top'],
+  'Mini dress': ['Fitted','A-line','Wrap','Shift','Slip'],
+  'Midi dress': ['Fitted','A-line','Wrap','Shirt','Slip'],
+  'Maxi dress': ['Fitted','A-line','Wrap','Flowy'],
+  'Wrap dress': ['Fitted','Regular','Relaxed'],
+  'Shirt dress': ['Fitted','Regular','Relaxed','Oversized'],
+  'Slip dress': ['Fitted','Regular'],
+  'Jumpsuit': ['Slim','Regular','Wide leg','Cropped'],
+  'Romper': ['Fitted','Regular','Relaxed'],
+  'Belt': ['Leather','Woven / Fabric','Chain','Elastic'],
+  'Hat / Cap': ['Baseball cap','Bucket hat','Beanie','Fedora','Beret','Flat cap'],
+  'Scarf / Wrap': ['Lightweight','Wool / Knit','Silk','Oversized / Blanket'],
+};
+
+const FORMALITY_LABELS = {
+  1:'Loungewear',2:'Casual',3:'Weekend casual',4:'Smart casual',
+  5:'Smart casual (elevated)',6:'Business casual',7:'Business formal',
+  8:'Cocktail / Evening',9:'Formal / Gala',10:'Black tie'
+};
+
+// ═══════════════════════════════════════════════
+// MODE SWITCHING
+// ═══════════════════════════════════════════════
+
+let currentMode = 'url';
+
+function switchMode(mode) {
+  currentMode = mode;
+  ['url','manual','photo'].forEach(m => {
+    document.getElementById('mode-' + m).classList.toggle('active', m === mode);
+    document.getElementById('tab-' + m).classList.toggle('active', m === mode);
+  });
+
+  // Show/hide shared fields for photo mode (no item card)
+  document.getElementById('shared-fields').style.display = mode === 'photo' ? 'none' : '';
+
+  // Update section numbers when image section visible
+  updateSectionNums();
+}
+
+function updateSectionNums() {
+  // Simple: just leave them static — they're decorative guides
+}
+
+// ═══════════════════════════════════════════════
+// FILENAME LOGIC
+// ═══════════════════════════════════════════════
+
+const filenameHistory = JSON.parse(localStorage.getItem('fn_history') || '[]');
+
+// Robustly extract the first valid JSON object from a string that may contain
+// surrounding prose, markdown fences, or tool-use preamble text.
+function extractJSON(text) {
+  // 1. Strip markdown code fences
+  text = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+  // 2. Find the first { and last } that form a valid JSON object
+  const start = text.indexOf('{');
+  const end = text.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) throw new SyntaxError('No JSON object found in response');
+  const candidate = text.slice(start, end + 1);
+  return JSON.parse(candidate);
+}
+
+function slugify(str) {
+  return str.toLowerCase()
+    .replace(/[àáâãäå]/g,'a').replace(/[èéêë]/g,'e')
+    .replace(/[ìíîï]/g,'i').replace(/[òóôõö]/g,'o')
+    .replace(/[ùúûü]/g,'u').replace(/[ñ]/g,'n')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+
+function suggestFilename() {
+  const name = document.getElementById('name').value.trim();
+  const brand = document.getElementById('brand').value.trim();
+  const color = document.getElementById('color').value.trim();
+  let brandPrefix = true;
+  if (filenameHistory.length >= 3) {
+    const withBrand = filenameHistory.filter(h => h.slug.startsWith(slugify(h.brand||''))).length;
+    brandPrefix = withBrand / filenameHistory.length > 0.5;
+  }
+  let parts = [];
+  if (brandPrefix && brand) parts.push(slugify(brand));
+  if (name) parts.push(slugify(name));
+  const withColor = filenameHistory.filter(h => h.slug.includes(slugify(h.color||''))).length;
+  const colorPref = filenameHistory.length >= 3 ? withColor / filenameHistory.length > 0.4 : false;
+  if (colorPref && color) parts.splice(brandPrefix ? 1 : 0, 0, slugify(color));
+  return parts.filter(Boolean).join('-') + '.jpg';
+}
+
+function onNameInput() {
+  const fn = document.getElementById('image-filename');
+  const mfn = document.getElementById('manual-image-filename');
+  const suggested = suggestFilename();
+  if (fn) fn.value = suggested;
+  if (mfn && !mfn.dataset.userEdited) mfn.value = suggested;
+}
+
+// ═══════════════════════════════════════════════
+// URL FETCH (existing logic, enhanced)
+// ═══════════════════════════════════════════════
+
+let _fetchedImageUrl = null;
+let _allImageUrls = [];
+
+function setStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'status ' + type;
+  el.textContent = msg;
+}
+
+function markField(fieldWrapId, inputId) {
+  const wrap = document.getElementById(fieldWrapId);
+  if (wrap) wrap.classList.add('autofilled');
+}
+
+function setField(id, value) {
+  const el = document.getElementById(id);
+  if (!el || !value) return false;
+  const v = String(value).trim();
+  if (!v || v === '—') return false;
+  if (el.tagName === 'SELECT') {
+    const opts = Array.from(el.options);
+    const match = opts.find(o => o.value.toLowerCase() === v.toLowerCase() || o.text.toLowerCase() === v.toLowerCase());
+    if (match) { el.value = match.value; markAutofilled(id); return true; }
+    const partial = opts.find(o => o.text.toLowerCase().includes(v.toLowerCase().split('/')[0].trim()) || v.toLowerCase().includes(o.text.toLowerCase().split('/')[0].trim()));
+    if (partial) { el.value = partial.value; markAutofilled(id); return true; }
+    return false;
+  }
+  el.value = v;
+  markAutofilled(id);
+  return true;
+}
+
+function markAutofilled(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const parent = el.closest('.field');
+  if (parent) parent.classList.add('autofilled');
+}
+
+// Strip Shopify width/crop params to get full-resolution image
+function shopifyFullRes(url) {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    // Remove Shopify resize params
+    ['width','height','crop'].forEach(p => u.searchParams.delete(p));
+    return u.toString();
+  } catch(e) { return url; }
+}
+
+// Try to fetch Shopify product JSON API directly from the browser
+// (works because the request comes from the user's browser, not a server)
+async function tryShopifyJSON(pageUrl) {
+  try {
+    const u = new URL(pageUrl);
+    // Extract handle from /products/[handle] path
+    const match = u.pathname.match(/\/products\/([^/?#]+)/);
+    if (!match) return null;
+    const handle = match[1];
+    const jsonUrl = `${u.origin}/products/${handle}.json`;
+    const res = await fetch(jsonUrl, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const p = data.product;
+    if (!p) return null;
+
+    // Extract all image URLs at full resolution
+    const images = (p.images || []).map(img => shopifyFullRes(img.src));
+    return {
+      _source: 'shopify',
+      name: p.title || null,
+      brand: p.vendor || null,
+      fabric: p.body_html
+        ? (p.body_html.replace(/<[^>]+>/g,' ').match(/(\d+%\s*\w[\w\s,]+(?:wool|cotton|polyester|viscose|linen|silk|nylon|elastane|spandex|cashmere|lyocell|modal|tencel|bamboo|rayon|acrylic)[^<.]*)/i) || [])[0] || null
+        : null,
+      care: null, // not in Shopify JSON, pull from description below
+      image_url: images[0] || null,
+      image_urls: images.slice(1, 7),
+      _body: p.body_html ? p.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g,' ').trim() : '',
+      _tags: p.tags || [],
+    };
+  } catch(e) {
+    return null;
+  }
+}
+
+async function fetchFromURL() {
+  const url = document.getElementById('pdp-url').value.trim();
+  if (!url) return;
+  const btn = document.getElementById('fetch-btn');
+  btn.disabled = true; btn.textContent = 'Fetching…';
+  setStatus('fetch-status', 'loading', 'Fetching product details and images…');
+  document.getElementById('legend').style.display = 'none';
+
+  try {
+    // ── STEP 1: Try Shopify JSON API (fast, reliable, full-res images) ──
+    let shopifyData = null;
+    if (url.includes('/products/')) {
+      setStatus('fetch-status', 'loading', 'Detected Shopify store — fetching product data directly…');
+      shopifyData = await tryShopifyJSON(url);
+    }
+
+    // ── STEP 2: AI extraction (product details + fills gaps) ──
+    setStatus('fetch-status', 'loading', shopifyData
+      ? 'Got images — asking AI to extract style details…'
+      : 'Fetching product details and images via AI…');
+
+    // Build a richer system prompt that knows about Shopify CDN patterns
+    const sys = `You are a fashion product data extractor. Given a product page URL, use web_search to fetch the page content and extract structured data.
+
+CRITICAL FOR IMAGES: Many fashion sites (especially Shopify stores) embed images like:
+  https://cdn.shopify.com/s/files/.../image.jpg?v=123&width=600
+  https://[store].myshopify.com/cdn/shop/files/image.jpg?v=123&width=1946
+Look for these patterns in <img src>, <img srcset>, and data-src attributes. Return the URL WITHOUT the ?width= parameter for full resolution.
+
+Also look for: og:image meta tags, JSON-LD product schema (window.productData, __st), and any product image gallery markup.
+
+Return ONLY valid JSON, no markdown, no preamble:
+{
+  "name":null,"brand":null,"color":null,"color2":null,"pattern":null,"silhouette":null,
+  "fabric":null,"weight":null,"category":null,"subcategory":null,"cut":null,
+  "seasons":[],"care":null,"tags":[],
+  "image_url":null,"image_urls":[]
+}
+image_url: the single best full-resolution product image URL you find (strip ?width= params from Shopify URLs)
+image_urls: up to 6 additional image URLs from the same product (different angles, strip ?width= params)
+pattern: one of Solid, Stripe, Plaid / Check, Floral, Geometric, Animal print, Abstract, Graphic, Other
+weight: one of Lightweight, Medium, Medium-heavy, Heavy
+category: one of Top, Bottom, Outerwear, Dress / Jumpsuit, Shoes, Accessory, Bag
+seasons: array subset of [spring, summer, fall, winter]
+care: care instructions separated by ·
+If you cannot find image URLs in the page source, set image_url to null — do not guess.`;
+
+    const userMsg = shopifyData
+      ? `Extract style details (color, pattern, silhouette, fabric, weight, care, category, cut, seasons) from this product page. The store name/brand is also useful. Page: ${url}\n\nExtra context from the product description: ${shopifyData._body.slice(0, 800)}`
+      : `Extract full product details and image URLs from: ${url}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1400,
+        tools: [{type:'web_search_20250305',name:'web_search'}],
+        system: sys,
+        messages: [{role:'user', content: userMsg}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.filter(b => b.type==='text').map(b => b.text).join('');
+    const parsed = extractJSON(text);
+
+    // ── STEP 3: Merge Shopify data (wins on images) with AI data (wins on style fields) ──
+    if (shopifyData) {
+      // Shopify JSON wins on images and name/brand
+      if (shopifyData.image_url) parsed.image_url = shopifyData.image_url;
+      if (shopifyData.image_urls && shopifyData.image_urls.length) parsed.image_urls = shopifyData.image_urls;
+      if (!parsed.name && shopifyData.name) parsed.name = shopifyData.name;
+      if (!parsed.brand && shopifyData.brand) parsed.brand = shopifyData.brand;
+      if (!parsed.fabric && shopifyData.fabric) parsed.fabric = shopifyData.fabric;
+      // Merge Shopify tags
+      if (shopifyData._tags && shopifyData._tags.length) {
+        shopifyData._tags.forEach(t => { if (t && !tags.includes(t)) tags.push(t); });
+      }
+    } else {
+      // Non-Shopify: strip width params from any image URLs the AI found
+      if (parsed.image_url) parsed.image_url = shopifyFullRes(parsed.image_url);
+      if (parsed.image_urls) parsed.image_urls = parsed.image_urls.map(shopifyFullRes);
+    }
+
+    // ── STEP 4: Apply to form ──
+    let filled = 0;
+    if (parsed.category) { setField('category', parsed.category); onCategoryChange(); filled++; }
+    if (parsed.subcategory) { setField('subcategory', parsed.subcategory); onSubcategoryChange(); filled++; }
+    ['name','brand','color','color2','pattern','silhouette','fabric','weight','care'].forEach(k => {
+      if (parsed[k] && setField(k, parsed[k])) filled++;
+    });
+    if (parsed.cut) { setField('cut', parsed.cut); filled++; }
+    if (Array.isArray(parsed.seasons) && parsed.seasons.length) {
+      ['spring','summer','fall','winter'].forEach(s => {
+        document.getElementById('s-'+s).checked = parsed.seasons.includes(s);
+      });
+      filled++;
+    }
+    if (Array.isArray(parsed.tags)) parsed.tags.forEach(t => { if (t && !tags.includes(t)) tags.push(t); });
+    renderTags();
+    onNameInput();
+
+    document.getElementById('legend').style.display = 'flex';
+
+    if (parsed.image_url) {
+      showURLImageSection(parsed.image_url, parsed.image_urls || []);
+      filled++;
+      setStatus('fetch-status', 'success', `Auto-filled ${filled} fields${shopifyData ? ' (images via Shopify API)' : ''}. Review highlighted fields, complete the personal fields, then generate.`);
+    } else {
+      setStatus('fetch-status', 'warn', `Auto-filled ${filled} fields. No product image found — right-click the product image on the retailer's site and save manually.`);
+    }
+  } catch(err) {
+    setStatus('fetch-status', 'error', 'Could not extract data — check the URL or fill in manually.');
+    console.error(err);
+  }
+
+  btn.disabled = false; btn.textContent = 'Look up ↗';
+}
+
+// ── IMAGE FETCHING ────────────────────────────────────────────────────────────
+// CDNs like Shopify's block cross-origin <img src> from file:// origins.
+// We fetch via CORS → convert to data URL → set as img.src.
+// "Save" reuses the cached data URL so no second download is needed.
+
+const _imgCache = new Map(); // url → data URL
+
+async function fetchImageDataUrl(url) {
+  if (_imgCache.has(url)) return _imgCache.get(url);
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) throw new Error('non-ok ' + res.status);
+    const blob = await res.blob();
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    _imgCache.set(url, dataUrl);
+    return dataUrl;
+  } catch(e) {
+    console.warn('Image fetch failed for', url, e.message);
+    return null;
+  }
+}
+
+async function showURLImageSection(imgUrl, allUrls) {
+  _fetchedImageUrl = imgUrl;
+  _allImageUrls = allUrls.length ? [imgUrl, ...allUrls.filter(u => u !== imgUrl)] : [imgUrl];
+
+  document.getElementById('image-section').style.display = 'block';
+  const preview = document.getElementById('img-preview');
+  const strip = document.getElementById('img-strip');
+  strip.innerHTML = '';
+  preview.style.display = 'block';
+  preview.src = '';
+  preview.alt = 'Loading…';
+  preview.style.opacity = '0.4';
+
+  async function applyToImg(imgEl, url, isMain) {
+    const dataUrl = await fetchImageDataUrl(url);
+    if (dataUrl) {
+      imgEl.src = dataUrl;
+      imgEl.alt = '';
+      imgEl.style.opacity = '1';
+    } else {
+      // CORS completely blocked — try direct src (works on some CDNs without hotlink protection)
+      imgEl.src = url;
+      imgEl.alt = '';
+      imgEl.style.opacity = '1';
+      imgEl.onerror = () => {
+        imgEl.src = '';
+        imgEl.style.opacity = '1';
+        if (isMain) {
+          // Show a clickable link as fallback
+          imgEl.alt = '';
+          const wrap = imgEl.closest('.img-preview-wrap');
+          if (wrap && !wrap.querySelector('.cdn-fallback')) {
+            const msg = document.createElement('div');
+            msg.className = 'cdn-fallback';
+            msg.style.cssText = 'padding:1.5rem;text-align:center;font-size:11px;color:var(--ink-3);line-height:1.8;';
+            msg.innerHTML = 'CDN preview blocked from local file.<br><a href="' + url + '" target="_blank" rel="noopener" style="color:var(--accent-mid);text-decoration:underline;">Open image in new tab ↗</a><br><span style="font-size:10px;opacity:0.7;">Then right-click → Save Image As, or use the Save ↓ button below.</span>';
+            wrap.appendChild(msg);
+          }
+        } else {
+          imgEl.alt = '↗';
+          imgEl.style.cursor = 'pointer';
+          imgEl.title = 'Click to open in new tab';
+          imgEl.onclick = () => window.open(url, '_blank', 'noopener');
+        }
+      };
+    }
+  }
+
+  // Load main preview
+  await applyToImg(preview, imgUrl, true);
+
+  // Build thumbnails — append all first (so layout appears), then fill in parallel
+  const jobs = _allImageUrls.slice(0, 8).map((u, i) => {
+    const thumb = document.createElement('img');
+    thumb.className = i === 0 ? 'selected' : '';
+    thumb.style.opacity = '0.3';
+    thumb.alt = '…';
+    strip.appendChild(thumb);
+    thumb.onclick = async () => {
+      _fetchedImageUrl = u;
+      preview.src = ''; preview.alt = 'Loading…'; preview.style.opacity = '0.4';
+      await applyToImg(preview, u, true);
+      strip.querySelectorAll('img').forEach(t => t.classList.remove('selected'));
+      thumb.classList.add('selected');
+    };
+    return { thumb, url: u };
+  });
+
+  // Fetch all thumbnails concurrently
+  await Promise.all(jobs.map(({ thumb, url }) => applyToImg(thumb, url, false)));
+
+  document.getElementById('image-filename').value = suggestFilename() || 'item.jpg';
+}
+
+async function downloadImage() {
+  if (!_fetchedImageUrl) return;
+  const fn = document.getElementById('image-filename').value.trim() || 'item.jpg';
+
+  // Reuse cached data URL (already fetched for display)
+  const cached = _imgCache.get(_fetchedImageUrl);
+  if (cached) {
+    const a = document.createElement('a'); a.href = cached; a.download = fn; a.click();
+    return;
+  }
+
+  // Not cached yet — try fresh CORS fetch
+  try {
+    const res = await fetch(_fetchedImageUrl, { mode: 'cors' });
+    if (res.ok) {
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = blobUrl; a.download = fn;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      return;
+    }
+  } catch(e) {}
+
+  // Last resort: open in new tab so user can save manually
+  window.open(_fetchedImageUrl, '_blank', 'noopener');
+}
+
+// ═══════════════════════════════════════════════
+// MANUAL PHOTO — upload + AI vision analysis
+// ═══════════════════════════════════════════════
+
+let _manualPhotoBase64 = null;
+let _manualPhotoMime = 'image/jpeg';
+
+function onDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadManualPhoto(file);
+}
+
+function onManualPhotoSelected(e) {
+  const file = e.target.files[0];
+  if (file) loadManualPhoto(file);
+}
+
+function loadManualPhoto(file) {
+  _manualPhotoMime = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    _manualPhotoBase64 = e.target.result.split(',')[1];
+    // Show preview
+    document.getElementById('manual-image-section').style.display = 'block';
+    document.getElementById('manual-img-preview').src = e.target.result;
+    // Auto-suggest filename from name field
+    const suggested = suggestFilename();
+    const mfn = document.getElementById('manual-image-filename');
+    if (!mfn.dataset.userEdited) mfn.value = suggested || file.name;
+    // Show analyze bar
+    document.getElementById('vision-bar').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzePhoto() {
+  if (!_manualPhotoBase64) return;
+  const btn = document.getElementById('analyze-btn');
+  btn.disabled = true; btn.textContent = 'Analyzing…';
+  setStatus('photo-status', 'loading', 'AI is analyzing the item photo to pre-fill visual fields…');
+
+  const sys = `You are a fashion product visual analyzer. Given a photo of a clothing item, extract what you can see. Return ONLY valid JSON with no markdown fences:
+{
+  "color": null,
+  "color2": null,
+  "pattern": null,
+  "silhouette": null,
+  "weight": null,
+  "category": null,
+  "subcategory": null,
+  "fabric_estimate": null,
+  "notes": null
+}
+pattern: one of Solid, Stripe, Plaid / Check, Floral, Geometric, Animal print, Abstract, Graphic, Other
+weight: estimate one of Lightweight, Medium, Medium-heavy, Heavy based on visible drape/texture
+category: one of Top, Bottom, Outerwear, Dress / Jumpsuit, Shoes, Accessory, Bag
+fabric_estimate: your best guess at fabric type from visual cues (e.g. "Likely wool or wool-blend", "Appears to be linen")
+notes: any helpful styling or fit observations from the photo
+Only include fields you can confidently infer. Return null for uncertain fields.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: sys,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: _manualPhotoMime, data: _manualPhotoBase64 }},
+            { type: 'text', text: 'Analyze this clothing item and extract visual data.' }
+          ]
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.filter(b => b.type==='text').map(b => b.text).join('');
+    const parsed = extractJSON(text);
+
+    let filled = 0;
+    ['color','color2','pattern','silhouette','weight','category'].forEach(k => {
+      if (parsed[k] && setField(k, parsed[k])) filled++;
+    });
+    if (parsed.category) { onCategoryChange(); }
+    if (parsed.subcategory) { setField('subcategory', parsed.subcategory); onSubcategoryChange(); filled++; }
+    if (parsed.fabric_estimate) {
+      const fabricEl = document.getElementById('fabric');
+      if (fabricEl && !fabricEl.value) { fabricEl.value = parsed.fabric_estimate; markAutofilled('fabric'); filled++; }
+    }
+    if (parsed.notes) {
+      const notesEl = document.getElementById('stylenotes');
+      if (notesEl && !notesEl.value) notesEl.value = parsed.notes;
+    }
+    document.getElementById('legend').style.display = 'flex';
+    setStatus('photo-status', 'success', `AI filled ${filled} visual fields. Fabric estimate is approximate — verify on the label.`);
+  } catch(err) {
+    setStatus('photo-status', 'error', 'Could not analyze photo — fill in visual fields manually.');
+    console.error(err);
+  }
+  btn.disabled = false; btn.textContent = 'Analyze ✦';
+}
+
+// ═══════════════════════════════════════════════
+// STYLE PHOTO MODE
+// ═══════════════════════════════════════════════
+
+let _stylePhotoBase64 = null;
+let _stylePhotoMime = 'image/jpeg';
+
+function onStyleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) loadStylePhoto(file);
+}
+
+function onStylePhotoSelected(e) {
+  const file = e.target.files[0];
+  if (file) loadStylePhoto(file);
+}
+
+function loadStylePhoto(file) {
+  _stylePhotoMime = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    _stylePhotoBase64 = e.target.result.split(',')[1];
+    document.getElementById('style-occasion-field').style.display = 'block';
+    document.getElementById('style-analyze-btn').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeStylePhoto() {
+  if (!_stylePhotoBase64) return;
+  const btn = document.getElementById('style-analyze-btn');
+  const occasion = document.getElementById('style-occasion').value.trim();
+  btn.disabled = true; btn.textContent = 'Analyzing…';
+  setStatus('style-status', 'loading', 'Analyzing style…');
+
+  const today = new Date().toISOString().split('T')[0];
+  const sys = `You are a personal stylist analyzing outfit photos and style inspiration for a style profile. Given an image, produce a concise style note in this format:
+
+---
+Date: ${today}
+${occasion ? 'Occasion: [occasion]' : ''}
+Type: [Outfit / Inspiration / Selfie]
+
+Key pieces observed:
+- [piece 1 description]
+- [piece 2 description]
+
+Color palette: [colors]
+Silhouettes: [silhouette notes]
+Formality level: [1-10] — [label]
+
+Style signatures:
+[2-3 bullet observations about recurring aesthetic, fit preferences, styling choices, or mood]
+
+AI note: [one sentence on what this suggests about the person's style identity]
+---
+
+Be specific, perceptive, and helpful. Focus on what's distinctive and repeatable about the aesthetic.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: sys,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: _stylePhotoMime, data: _stylePhotoBase64 }},
+            { type: 'text', text: occasion ? `Analyze this image. Occasion: ${occasion}` : 'Analyze this style image.' }
+          ]
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.filter(b => b.type==='text').map(b => b.text).join('');
+    document.getElementById('style-note-box').textContent = text;
+    document.getElementById('style-output').style.display = 'block';
+    setStatus('style-status', 'success', 'Style note generated. Copy it to your style-profile.md or outfit-log.md.');
+    window._generatedStyleNote = text;
+  } catch(err) {
+    setStatus('style-status', 'error', 'Could not analyze image.');
+    console.error(err);
+  }
+  btn.disabled = false; btn.textContent = 'Analyze style ✦';
+}
+
+function copyStyleNote() {
+  if (!window._generatedStyleNote) return;
+  navigator.clipboard.writeText(window._generatedStyleNote).then(() => {
+    // Simple feedback
+    event.target.textContent = 'Copied!';
+    setTimeout(() => event.target.textContent = 'Copy note', 1500);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// CATEGORY / SUBCATEGORY / CUT
+// ═══════════════════════════════════════════════
+
+function updateFormality() {
+  const lo = parseInt(document.getElementById('form-low').value);
+  const hi = parseInt(document.getElementById('form-high').value);
+  document.getElementById('form-low-val').textContent = lo;
+  document.getElementById('form-high-val').textContent = hi;
+  document.getElementById('form-desc').textContent =
+    FORMALITY_LABELS[lo] + ' → ' + FORMALITY_LABELS[hi];
+}
+
+function onCategoryChange() {
+  const cat = document.getElementById('category').value;
+  const subField = document.getElementById('subcat-field');
+  const subSel = document.getElementById('subcategory');
+  subSel.innerHTML = '<option value="">—</option>';
+  if (SUBCATS[cat]) {
+    SUBCATS[cat].forEach(s => {
+      const o = document.createElement('option'); o.value = s; o.textContent = s; subSel.appendChild(o);
+    });
+    subSel.disabled = false;
+    subSel.style.opacity = '1';
+  } else {
+    subSel.disabled = true;
+    subSel.style.opacity = '0.4';
+  }
+  onSubcategoryChange();
+}
+
+function onSubcategoryChange() {
+  const sub = document.getElementById('subcategory').value;
+  const cutSel = document.getElementById('cut');
+  cutSel.innerHTML = '<option value="">—</option>';
+  const cuts = CUTS[sub] || ['Slim / Tailored','Standard / Regular','Relaxed','Oversized','Cropped'];
+  cuts.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; cutSel.appendChild(o); });
+}
+
+// ═══════════════════════════════════════════════
+// TAGS
+// ═══════════════════════════════════════════════
+
+const tags = [];
+
+function addTag() {
+  const input = document.getElementById('tag-input');
+  const val = input.value.trim();
+  if (!val || tags.includes(val)) { input.value = ''; return; }
+  tags.push(val); renderTags(); input.value = '';
+}
+
+function removeTag(t) { tags.splice(tags.indexOf(t), 1); renderTags(); }
+
+function renderTags() {
+  const wrap = document.getElementById('tags-wrap');
+  wrap.innerHTML = '';
+  tags.forEach(t => {
+    const el = document.createElement('span');
+    el.className = 'tag';
+    el.innerHTML = t + '<button onclick="removeTag(\'' + t.replace(/'/g,"\\'") + '\')">&times;</button>';
+    wrap.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// GENERATE CARD
+// ═══════════════════════════════════════════════
+
+function fv(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function seasons() {
+  const s = [];
+  ['spring','summer','fall','winter'].forEach(k => {
+    if (document.getElementById('s-'+k).checked) s.push(k.charAt(0).toUpperCase()+k.slice(1));
+  });
+  return s.length ? s.join(' / ') : '—';
+}
+
+function generate() {
+  const name = fv('name') || 'Untitled Item';
+  let imgFile = '';
+  if (currentMode === 'url') imgFile = fv('image-filename');
+  else if (currentMode === 'manual') imgFile = fv('manual-image-filename');
+  if (!imgFile) imgFile = slugify(name) + '.jpg';
+
+  const slug = imgFile.replace(/\.[^.]+$/,'') || slugify(name);
+  const pdpUrl = document.getElementById('pdp-url') ? fv('pdp-url') : '';
+  const lo = document.getElementById('form-low').value;
+  const hi = document.getElementById('form-high').value;
+  const subcat = fv('subcategory');
+  const color2 = fv('color2');
+  const inseam = fv('inseam');
+  const care = fv('care');
+  const price = fv('price');
+  const stylenotes = fv('stylenotes');
+
+  const lines = [
+    '# ' + name,
+    '',
+    '## Visual',
+    '- Image: `' + imgFile + '`',
+    '- Primary color: ' + (fv('color') || '—'),
+    color2 ? '- Secondary color: ' + color2 : null,
+    '- Pattern: ' + (fv('pattern') || '—'),
+    '- Silhouette: ' + (fv('silhouette') || '—'),
+    '',
+    '## Construction',
+    '- Fabric: ' + (fv('fabric') || '—'),
+    '- Weight: ' + (fv('weight') || '—'),
+    '- Season: ' + seasons(),
+    '- Care: ' + (care || '—'),
+    '',
+    '## Fit',
+    '- Cut: ' + (fv('cut') || '—'),
+    inseam ? '- Inseam / length: ' + inseam : null,
+    '- My size in this: ' + (fv('size') || '—'),
+    '- Fit notes: ' + (fv('fitnotes') || '—'),
+    '',
+    '## Wearing profile',
+    '- Formality range: ' + lo + '/10 (' + (FORMALITY_LABELS[parseInt(lo)] || lo) + ') → ' + hi + '/10 (' + (FORMALITY_LABELS[parseInt(hi)] || hi) + ')',
+    '- Occasions: ' + (fv('occasions') || '—'),
+    '- Feels: ' + (fv('feels') || '—'),
+    stylenotes ? '- Style notes: ' + stylenotes : null,
+    '',
+    tags.length ? '## Tags\n- ' + tags.join(', ') : null,
+    tags.length ? '' : null,
+    '## Metadata',
+    '- Brand: ' + (fv('brand') || '—'),
+    '- Category: ' + (fv('category') || '—') + (subcat ? ' › ' + subcat : ''),
+    '- Acquired: ' + (fv('acquired') || '—'),
+    price ? '- Price: ' + price : null,
+    '- Condition: ' + (fv('condition') || '—'),
+    '- Rotation: ' + (fv('rotation') || '—'),
+    pdpUrl ? '- Source: ' + pdpUrl : null,
+  ].filter(l => l !== null);
+
+  const md = lines.join('\n');
+  window._generatedCard = md;
+
+  // Render with decoration
+  document.getElementById('preview').textContent = md;
+
+  // Filename chip
+  document.getElementById('filename-chip-wrap').innerHTML =
+    '<span class="filename-chip">' + slug + '.md</span>';
+
+  // Show buttons
+  document.getElementById('copy-btn').style.display = 'inline-block';
+  document.getElementById('download-md-btn').style.display = 'inline-block';
+  document.getElementById('add-gallery-btn').style.display = 'inline-block';
+
+  // Auto-open gallery if it has items
+  if (galleryItems.length > 0) {
+    const body = document.getElementById('gallery-body');
+    if (!body.classList.contains('open')) toggleGallery();
+  }
+}
+
+function copyCard() {
+  if (!window._generatedCard) return;
+  navigator.clipboard.writeText(window._generatedCard).then(() => {
+    const flash = document.getElementById('copied-flash');
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 1800);
+  });
+}
+
+function downloadCard() {
+  if (!window._generatedCard) return;
+  const name = fv('name') || 'item';
+  const filename = slugify(name) + '.md';
+  const blob = new Blob([window._generatedCard], {type: 'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Delay revocation so browser has time to initiate the download
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+// ═══════════════════════════════════════════════
+// GALLERY
+// ═══════════════════════════════════════════════
+
+// Each item: { id, name, brand, category, subcategory, color, pattern, imageDataUrl, imageFilename, md }
+const galleryItems = JSON.parse(sessionStorage.getItem('closet_gallery') || '[]');
+
+function saveGallery() {
+  try { sessionStorage.setItem('closet_gallery', JSON.stringify(galleryItems)); } catch(e) {}
+}
+
+function toggleGallery() {
+  const body = document.getElementById('gallery-body');
+  const toggle = document.getElementById('gallery-toggle');
+  body.classList.toggle('open');
+  toggle.textContent = body.classList.contains('open') ? 'Hide ↑' : 'Show ↓';
+}
+
+function addToGallery() {
+  if (!window._generatedCard) return;
+
+  const id = Date.now();
+  const name = fv('name') || 'Untitled';
+  const brand = fv('brand');
+  const category = fv('category');
+  const subcategory = fv('subcategory');
+  const color = fv('color');
+  const pattern = fv('pattern');
+  const formLo = document.getElementById('form-low').value;
+  const formHi = document.getElementById('form-high').value;
+  const occasions = fv('occasions');
+  const tagsCopy = [...tags];
+
+  // Store only the filename — images live in GitHub, referenced by relative path
+  let imageFilename = '';
+  if (currentMode === 'url') imageFilename = fv('image-filename');
+  else if (currentMode === 'manual') imageFilename = fv('manual-image-filename');
+  if (!imageFilename) imageFilename = slugify(name) + '.jpg';
+
+  // Store image source refs for GitHub push (session only, not persisted)
+  const srcUrl = (currentMode === 'url') ? _fetchedImageUrl : null;
+  const manualB64 = (currentMode === 'manual' && _manualPhotoBase64)
+    ? 'data:' + _manualPhotoMime + ';base64,' + _manualPhotoBase64
+    : null;
+
+  // Check for duplicate by name+brand — update in place
+  const existing = galleryItems.findIndex(i => i.name === name && i.brand === brand);
+  const entry = {
+    id: existing !== -1 ? galleryItems[existing].id : id,
+    name, brand, category, subcategory, color, pattern,
+    formLo, formHi, occasions, tags: tagsCopy,
+    imageFilename,
+    md: window._generatedCard,
+    // Session-only image refs (not JSON-serialised to sessionStorage)
+    _srcUrl: srcUrl,
+    _manualBase64: manualB64,
+  };
+
+  if (existing !== -1) {
+    galleryItems[existing] = entry;
+  } else {
+    galleryItems.push(entry);
+  }
+
+  saveGallery();
+  renderGallery();
+
+  // Open gallery
+  const body = document.getElementById('gallery-body');
+  if (!body.classList.contains('open')) toggleGallery();
+
+  // Flash button
+  const btn = document.getElementById('add-gallery-btn');
+  const orig = btn.textContent;
+  btn.textContent = '✓ Added';
+  setTimeout(() => btn.textContent = orig, 1500);
+}
+
+function removeFromGallery(id) {
+  const idx = galleryItems.findIndex(i => i.id === id);
+  if (idx !== -1) { galleryItems.splice(idx, 1); saveGallery(); renderGallery(); }
+}
+
+function clearGallery() {
+  if (!confirm('Remove all items from the gallery?')) return;
+  galleryItems.length = 0;
+  saveGallery();
+  renderGallery();
+}
+
+function renderGallery() {
+  const grid = document.getElementById('gallery-grid');
+  const empty = document.getElementById('gallery-empty');
+  const actions = document.getElementById('gallery-actions');
+  const count = document.getElementById('gallery-count');
+
+  count.textContent = galleryItems.length;
+
+  if (!galleryItems.length) {
+    grid.innerHTML = '';
+    grid.appendChild(empty);
+    empty.style.display = '';
+    actions.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  actions.style.display = 'flex';
+  grid.innerHTML = '';
+
+  galleryItems.forEach(item => {
+    const thumb = document.createElement('div');
+    thumb.className = 'gallery-thumb';
+    thumb.title = [item.brand, item.name].filter(Boolean).join(' — ');
+
+    // Always show placeholder — images live in GitHub, not in-session
+    const ph = document.createElement('div');
+    ph.className = 'gallery-thumb-placeholder';
+    const emoji = { 'Top': '👕', 'Bottom': '👖', 'Outerwear': '🧥', 'Dress / Jumpsuit': '👗', 'Shoes': '👟', 'Accessory': '💍', 'Bag': '👜' };
+    ph.textContent = emoji[item.category] || '🧺';
+    thumb.appendChild(ph);
+
+    const label = document.createElement('div');
+    label.className = 'gallery-thumb-label';
+    label.textContent = item.name;
+    thumb.appendChild(label);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'gallery-thumb-remove';
+    removeBtn.innerHTML = '×';
+    removeBtn.title = 'Remove';
+    removeBtn.onclick = (e) => { e.stopPropagation(); removeFromGallery(item.id); };
+    thumb.appendChild(removeBtn);
+
+    grid.appendChild(thumb);
+  });
+}
+
+function exportGallery() {
+  if (!galleryItems.length) return;
+
+  // Build checklist
+  const checklist = document.getElementById('export-checklist');
+  checklist.innerHTML = '';
+  document.getElementById('push-status').className = 'push-status';
+
+  // Show/hide push button based on GitHub connection
+  const pushBtn = document.getElementById('push-all-btn');
+  pushBtn.style.display = ghIsConnected() ? 'inline-block' : 'none';
+
+  // Update intro text
+  const intro = document.getElementById('checklist-intro');
+  if (ghIsConnected()) {
+    const c = ghConfig();
+    intro.innerHTML = `Connected to <strong>${c.username}/${c.repo}</strong>. Click <em>Push all to GitHub ↑</em> to update your live gallery automatically. Images available from this session will be pushed; others need manual upload.`;
+  } else {
+    intro.innerHTML = `For each item, copy the exact filename and save the image from the retailer's site using that name. Upload all images to your GitHub repository alongside <code>index.html</code>. <a href="#" onclick="openGHSettings();return false;" style="color:var(--accent-mid)">Connect GitHub ↗</a> to push automatically.`;
+  }
+
+  galleryItems.forEach(item => {
+    const fn = item.imageFilename || (slugify(item.name) + '.jpg');
+    const hasImage = !!(item._srcUrl || item._manualBase64);
+
+    const row = document.createElement('div');
+    row.className = 'checklist-item';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'checklist-item-name';
+    nameEl.textContent = [item.brand, item.name].filter(Boolean).join(' — ');
+    row.appendChild(nameEl);
+
+    // Image availability indicator
+    if (ghIsConnected()) {
+      const badge = document.createElement('span');
+      badge.style.cssText = 'font-size:9px;padding:2px 7px;border-radius:20px;flex-shrink:0;';
+      if (hasImage) {
+        badge.textContent = 'ready to push';
+        badge.style.cssText += 'background:var(--accent-light);color:var(--accent-mid);border:1px solid var(--accent-mid);';
+      } else {
+        badge.textContent = 'manual upload needed';
+        badge.style.cssText += 'background:var(--gold-light);color:var(--gold);border:1px solid #ddc98a;';
+      }
+      row.appendChild(badge);
+    }
+
+    const fnEl = document.createElement('span');
+    fnEl.className = 'checklist-filename';
+    fnEl.textContent = fn;
+    fnEl.title = fn;
+    row.appendChild(fnEl);
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-fn-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(fn).then(() => {
+        copyBtn.textContent = 'Copied ✓';
+        copyBtn.classList.add('copied');
+        setTimeout(() => { copyBtn.textContent = 'Copy'; copyBtn.classList.remove('copied'); }, 1800);
+      });
+    };
+    row.appendChild(copyBtn);
+    checklist.appendChild(row);
+  });
+
+  document.getElementById('export-modal').classList.add('open');
+}
+
+function closeExportModal() {
+  document.getElementById('export-modal').classList.remove('open');
+}
+
+function buildGalleryHTML() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Build item cards HTML — images referenced by relative filename path
+  const itemsHTML = galleryItems.map(item => {
+    const fn = item.imageFilename || '';
+    const imgHTML = fn
+      ? `<div class="item-img"><img src="${escHTML(fn)}" alt="${escHTML(item.name)}" loading="lazy" onerror="this.parentElement.classList.add('item-img-ph-fallback');this.style.display='none'" /></div>`
+      : `<div class="item-img item-img-ph">${({ 'Top': '👕', 'Bottom': '👖', 'Outerwear': '🧥', 'Dress / Jumpsuit': '👗', 'Shoes': '👟', 'Accessory': '💍', 'Bag': '👜' }[item.category] || '🧺')}</div>`;
+
+    const catLabel = [item.category, item.subcategory].filter(Boolean).join(' › ');
+    const tagsHTML = item.tags && item.tags.length
+      ? `<div class="item-tags">${item.tags.map(t => `<span class="item-tag">${escHTML(t)}</span>`).join('')}</div>`
+      : '';
+    const formalityLabel = FORMALITY_LABELS[parseInt(item.formLo)] || item.formLo;
+
+    return `<article class="item-card" data-category="${escHTML(item.category || '')}" data-color="${escHTML(item.color || '')}">
+  ${imgHTML}
+  <div class="item-body">
+    <div class="item-meta-top">
+      ${item.brand ? `<span class="item-brand">${escHTML(item.brand)}</span>` : ''}
+      ${catLabel ? `<span class="item-cat">${escHTML(catLabel)}</span>` : ''}
+    </div>
+    <h2 class="item-name">${escHTML(item.name)}</h2>
+    <div class="item-chips">
+      ${item.color ? `<span class="chip chip-color">${escHTML(item.color)}</span>` : ''}
+      ${item.pattern ? `<span class="chip">${escHTML(item.pattern)}</span>` : ''}
+    </div>
+    <div class="item-formality">
+      <span class="form-range-label">${escHTML(String(item.formLo))}–${escHTML(String(item.formHi))}</span>
+      <div class="form-bar-wrap"><div class="form-bar" style="left:${((parseInt(item.formLo)-1)/9)*100}%;width:${((parseInt(item.formHi)-parseInt(item.formLo))/9)*100}%"></div></div>
+      <span class="form-range-label-sm">${escHTML(formalityLabel)}</span>
+    </div>
+    ${item.occasions ? `<div class="item-occasions">↳ ${escHTML(item.occasions)}</div>` : ''}
+    ${tagsHTML}
+  </div>
+</article>`;
+  }).join('\n');
+
+  // Category filter buttons
+  const cats = [...new Set(galleryItems.map(i => i.category).filter(Boolean))].sort();
+  const filterBtns = ['All', ...cats].map(c =>
+    `<button class="filter-btn${c === 'All' ? ' active' : ''}" onclick="filterGallery('${escHTML(c)}')">${escHTML(c)}</button>`
+  ).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Closet — Visual Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1c1917; --ink-2: #57534e; --ink-3: #a8a29e;
+  --paper: #faf9f7; --paper-2: #f2f0ec; --paper-3: #e8e5df;
+  --rule: #ddd9d2; --accent: #2d4a2d; --accent-light: #e8f0e8;
+  --accent-mid: #4a7c4a; --gold: #8b6914; --gold-light: #f5edd6;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Mono', monospace; background: var(--paper); color: var(--ink); min-height: 100vh; }
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 1000; opacity: 0.4;
+}
+body::after {
+  content: ''; position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-mid) 50%, transparent 100%);
+  z-index: 100; pointer-events: none;
+}
+header { border-bottom: 1px solid var(--rule); padding: 2rem 2.5rem 1.5rem; position: sticky; top: 0; background: var(--paper); z-index: 50; }
+.header-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+.header-title { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 300; letter-spacing: 0.02em; color: var(--ink); line-height: 1; }
+.header-meta { font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; margin-top: 6px; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 1rem; }
+.filter-btn { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 14px; border: 1px solid var(--rule); border-radius: 20px; background: transparent; color: var(--ink-3); cursor: pointer; transition: all 0.15s; }
+.filter-btn:hover { border-color: var(--ink-3); color: var(--ink); }
+.filter-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+main { padding: 2rem 2.5rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.25rem; }
+.item-card { border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--paper); transition: border-color 0.15s, box-shadow 0.15s; }
+.item-card:hover { border-color: var(--ink-3); box-shadow: 0 4px 20px rgba(28,25,23,0.06); }
+.item-img { background: var(--paper-2); overflow: hidden; aspect-ratio: 3/4; }
+.item-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
+.item-card:hover .item-img img { transform: scale(1.03); }
+.item-img-ph, .item-img-ph-fallback { display: flex; align-items: center; justify-content: center; font-size: 40px; color: var(--ink-3); width: 100%; height: 100%; }
+.item-body { padding: 0.875rem 1rem; }
+.item-meta-top { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; flex-wrap: wrap; }
+.item-brand { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.item-cat { font-size: 9px; letter-spacing: 0.08em; color: var(--ink-3); opacity: 0.7; }
+.item-brand + .item-cat::before { content: '·'; margin-right: 6px; }
+.item-name { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 400; line-height: 1.3; color: var(--ink); margin-bottom: 8px; }
+.item-chips { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.chip { display: inline-block; padding: 2px 8px; background: var(--paper-3); border: 1px solid var(--rule); border-radius: 20px; font-size: 10px; color: var(--ink-2); letter-spacing: 0.04em; }
+.item-formality { margin-bottom: 6px; display: flex; align-items: center; gap: 7px; }
+.form-range-label { font-size: 10px; color: var(--ink-3); min-width: 20px; }
+.form-range-label-sm { font-size: 9px; color: var(--ink-3); letter-spacing: 0.04em; }
+.form-bar-wrap { flex: 1; height: 2px; background: var(--paper-3); border-radius: 2px; position: relative; overflow: hidden; }
+.form-bar { position: absolute; top: 0; height: 100%; background: var(--accent-mid); border-radius: 2px; }
+.item-occasions { font-size: 10px; color: var(--ink-3); letter-spacing: 0.03em; line-height: 1.5; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.item-tag { font-size: 9px; padding: 2px 6px; background: var(--accent-light); color: var(--accent); border-radius: 20px; letter-spacing: 0.04em; }
+.hidden { display: none !important; }
+footer { border-top: 1px solid var(--rule); padding: 1.5rem 2.5rem; font-size: 10px; color: var(--ink-3); letter-spacing: 0.08em; margin-top: 3rem; }
+@media (max-width: 600px) {
+  header, main, footer { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-eyebrow">Closet — Visual Library</div>
+  <div class="header-title">My Closet</div>
+  <div class="header-meta">${galleryItems.length} items · Exported ${dateStr}</div>
+  <div class="filters" id="filters">${filterBtns}</div>
+</header>
+<main>
+  <div class="grid" id="grid">${itemsHTML}</div>
+</main>
+<footer>Generated by Closet Item Card Generator · Hosted on Cloudflare Pages · Images uploaded to GitHub alongside this file</footer>
+<script>
+function filterGallery(cat) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.textContent === cat));
+  document.querySelectorAll('.item-card').forEach(card => {
+    card.classList.toggle('hidden', cat !== 'All' && card.dataset.category !== cat);
+  });
+}
+<\/script>
+</body>
+</html>`;
+
+  return html;
+}
+
+function doExportGallery() {
+  const html = buildGalleryHTML();
+  const blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'index.html';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  closeExportModal();
+}
+
+function escHTML(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════════════════
+// GITHUB INTEGRATION
+// ═══════════════════════════════════════════════
+
+function ghConfig() {
+  return {
+    username: localStorage.getItem('gh_username') || '',
+    repo: localStorage.getItem('gh_repo') || '',
+    token: localStorage.getItem('gh_token') || '',
+  };
+}
+
+function ghIsConnected() {
+  const c = ghConfig();
+  return !!(c.username && c.repo && c.token);
+}
+
+function updateGHButton() {
+  const btn = document.getElementById('gh-settings-btn');
+  const label = document.getElementById('gh-settings-label');
+  if (ghIsConnected()) {
+    const c = ghConfig();
+    btn.classList.add('connected');
+    label.textContent = c.repo;
+  } else {
+    btn.classList.remove('connected');
+    label.textContent = 'GitHub';
+  }
+}
+
+function openGHSettings() {
+  const c = ghConfig();
+  document.getElementById('gh-username').value = c.username;
+  document.getElementById('gh-repo').value = c.repo;
+  document.getElementById('gh-token').value = c.token;
+  document.getElementById('gh-modal').classList.add('open');
+}
+
+function closeGHSettings() {
+  document.getElementById('gh-modal').classList.remove('open');
+}
+
+function saveGHSettings() {
+  const username = document.getElementById('gh-username').value.trim();
+  const repo = document.getElementById('gh-repo').value.trim();
+  const token = document.getElementById('gh-token').value.trim();
+  if (!username || !repo || !token) { alert('Please fill in all three fields.'); return; }
+  localStorage.setItem('gh_username', username);
+  localStorage.setItem('gh_repo', repo);
+  localStorage.setItem('gh_token', token);
+  updateGHButton();
+  closeGHSettings();
+}
+
+function clearGHSettings() {
+  if (!confirm('Remove saved GitHub credentials from this browser?')) return;
+  localStorage.removeItem('gh_username');
+  localStorage.removeItem('gh_repo');
+  localStorage.removeItem('gh_token');
+  updateGHButton();
+  closeGHSettings();
+}
+
+// Push a single file to GitHub via API (create or update)
+async function pushFileToGitHub(path, content, isBinary = false) {
+  const c = ghConfig();
+  if (!c.token) throw new Error('No GitHub token configured');
+
+  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(c.username)}/${encodeURIComponent(c.repo)}/contents/${path}`;
+
+  // Check if file exists to get its SHA (required for updates)
+  let sha = null;
+  try {
+    const check = await fetch(apiUrl, {
+      headers: { 'Authorization': `Bearer ${c.token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (check.ok) {
+      const existing = await check.json();
+      sha = existing.sha;
+    }
+  } catch(e) {}
+
+  // content must be base64
+  const base64content = isBinary ? content : btoa(unescape(encodeURIComponent(content)));
+
+  const body = {
+    message: `Update ${path} via Closet generator`,
+    content: base64content,
+  };
+  if (sha) body.sha = sha;
+
+  const res = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${c.token}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `GitHub API error ${res.status}`);
+  }
+  return await res.json();
+}
+
+// Convert a data URL or blob URL to base64 string (without prefix)
+async function imageUrlToBase64(url) {
+  if (url.startsWith('data:')) {
+    return url.split(',')[1];
+  }
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function pushAllToGitHub() {
+  if (!ghIsConnected()) { openGHSettings(); return; }
+
+  const pushBtn = document.getElementById('push-all-btn');
+  const statusEl = document.getElementById('push-status');
+
+  pushBtn.disabled = true;
+  pushBtn.textContent = 'Pushing…';
+
+  function setPS(type, msg) {
+    statusEl.className = 'push-status ' + type;
+    statusEl.textContent = msg;
+  }
+
+  try {
+    // 1. Push index.html
+    setPS('loading', 'Building and pushing index.html…');
+    const htmlContent = buildGalleryHTML();
+    await pushFileToGitHub('index.html', htmlContent);
+
+    // 2. Push images that are cached (fetched via URL import this session)
+    const imageItems = galleryItems.filter(i => i.imageFilename && _imgCache.has(i._srcUrl));
+    let pushed = 0;
+    let skipped = 0;
+
+    for (const item of galleryItems) {
+      if (!item.imageFilename) { skipped++; continue; }
+      // Try to find cached image data
+      const cachedUrl = item._srcUrl && _imgCache.has(item._srcUrl) ? _imgCache.get(item._srcUrl) : null;
+      const manualData = item._manualBase64 || null;
+      const dataUrl = cachedUrl || manualData;
+
+      if (!dataUrl) { skipped++; continue; }
+
+      setPS('loading', `Pushing image ${pushed + 1}/${galleryItems.filter(i=>i.imageFilename).length}: ${item.imageFilename}…`);
+      const base64 = dataUrl.startsWith('data:') ? dataUrl.split(',')[1] : await imageUrlToBase64(dataUrl);
+      await pushFileToGitHub(item.imageFilename, base64, true);
+      pushed++;
+    }
+
+    const skipMsg = skipped > 0 ? ` ${skipped} image(s) need manual upload (no image data in session).` : '';
+    setPS('success', `✓ Pushed index.html${pushed > 0 ? ` + ${pushed} image(s)` : ''} to GitHub. Cloudflare will update in ~1 minute.${skipMsg}`);
+  } catch(err) {
+    setPS('error', `Push failed: ${err.message}`);
+    console.error(err);
+  }
+
+  pushBtn.disabled = false;
+  pushBtn.textContent = 'Push all to GitHub ↑';
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+
+updateFormality();
+onCategoryChange(); // init subcategory state
+renderGallery();    // restore any session gallery
+updateGHButton();   // reflect saved GitHub config
+</script>
+</body>
+</html>
