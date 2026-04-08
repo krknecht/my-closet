@@ -10,7 +10,7 @@
       "status": "active",
       "identity": {
         "name": "Mid-Rise Straight Jeans",
-        "brand": "Chloé",
+        "brand": "ChloÃ©",
         "collection_season": null,
         "year_acquired": 2026,
         "vintage": {
@@ -118,7 +118,7 @@
           "pink denim",
           "luxury denim",
           "designer jeans",
-          "Chloé"
+          "ChloÃ©"
         ],
         "notes": null,
         "claude_context": null
@@ -258,7 +258,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Vintage Hourglass Crêpe 'CC' Jacket",
+        "name": "Vintage Hourglass CrÃªpe 'CC' Jacket",
         "brand": "Chanel",
         "collection_season": null,
         "year_acquired": null,
@@ -713,7 +713,7 @@
           "Summer weekends"
         ],
         "feels": [],
-        "style_notes": "A step above jean shorts. Pills easily — handle with care.",
+        "style_notes": "A step above jean shorts. Pills easily â handle with care.",
         "works_with": []
       },
       "provenance": {
@@ -750,7 +750,7 @@
           "ecru"
         ],
         "notes": null,
-        "claude_context": "Pills easily — avoid abrasive surfaces and rough washing."
+        "claude_context": "Pills easily â avoid abrasive surfaces and rough washing."
       }
     },
     {
@@ -759,7 +759,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Lowell Wrap Belt in Leather — Bone",
+        "name": "Lowell Wrap Belt in Leather â Bone",
         "brand": "KALLMEYER",
         "collection_season": null,
         "year_acquired": 2026,
@@ -880,7 +880,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Lowell Wrap Belt in Leather — Dark Brown",
+        "name": "Lowell Wrap Belt in Leather â Dark Brown",
         "brand": "KALLMEYER",
         "collection_season": null,
         "year_acquired": 2026,
@@ -1152,7 +1152,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "Mélange weave — subtle tonal variation in the fabric.",
+        "print_description": "MÃ©lange weave â subtle tonal variation in the fabric.",
         "silhouette": "Wide-leg",
         "length": "Floor",
         "embellishment": [
@@ -1244,7 +1244,7 @@
           "floor length",
           "suiting",
           "viscose wool",
-          "mélange",
+          "mÃ©lange",
           "tailored",
           "SS26",
           "TWP"
@@ -1287,7 +1287,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "Mélange weave — subtle tonal variation in the fabric.",
+        "print_description": "MÃ©lange weave â subtle tonal variation in the fabric.",
         "silhouette": "Boxy",
         "length": "Cropped",
         "embellishment": [
@@ -1374,7 +1374,7 @@
         "tags": [
           "viscose wool",
           "suiting blend",
-          "mélange",
+          "mÃ©lange",
           "structured",
           "draped",
           "button down",
@@ -1420,7 +1420,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "Grey mélange wool",
+        "print_description": "Grey mÃ©lange wool",
         "silhouette": "Double-breasted",
         "length": "Thigh",
         "sleeve_length": "Long sleeve",
@@ -1511,6 +1511,135 @@
         ],
         "notes": null,
         "claude_context": null,
+        "rotation": null
+      }
+    },
+    {
+      "id": "2dcaac6e-a32c-4f79-84f6-1d36d4a42bfd",
+      "created_at": "2026-04-08T18:40:59.153Z",
+      "updated_at": "2026-04-08T18:40:59.153Z",
+      "status": "active",
+      "identity": {
+        "name": "Guermantes leather slingback pumps",
+        "brand": "Saint Laurent",
+        "collection_season": "SS26",
+        "year_acquired": 2026,
+        "vintage": {
+          "is_vintage": false,
+          "era": null
+        },
+        "sku": "46376663163102488",
+        "colorway_name": "White"
+      },
+      "category": {
+        "department": "Shoes",
+        "category": "Heels",
+        "subcategory": "Slingback"
+      },
+      "image": {
+        "filename": "2dcaac6e-a32c-4f79-84f6-1d36d4a42bfd.avif",
+        "format": "avif",
+        "alt_images": []
+      },
+      "visual": {
+        "colors": {
+          "primary": "White",
+          "secondary": "Black",
+          "tertiary": null
+        },
+        "pattern": "Solid",
+        "print_description": null,
+        "silhouette": null,
+        "length": null,
+        "sleeve_length": null,
+        "embellishment": [
+          "None"
+        ]
+      },
+      "construction": {
+        "fabric": [
+          {
+            "material": "Calfskin",
+            "percentage": null
+          },
+          {
+            "material": "Lambskin",
+            "percentage": null
+          }
+        ],
+        "lining": {
+          "type": null,
+          "material": null
+        },
+        "weight": null,
+        "structure": null,
+        "seasons": [
+          "spring",
+          "summer",
+          "fall",
+          "winter"
+        ],
+        "care": null,
+        "country_of_origin": "Italy",
+        "sustainability": [
+          "None"
+        ]
+      },
+      "fit": {
+        "cut": null,
+        "size": "39",
+        "size_system": "EU",
+        "inseam_length": null,
+        "fit_notes": null,
+        "fit_relative": null
+      },
+      "wearing_profile": {
+        "formality": {
+          "min": 5,
+          "max": 8
+        },
+        "occasions": [
+          "Date night"
+        ],
+        "feels": [
+          "Confident"
+        ],
+        "style_notes": "95mm heels, ultra-pointed toe",
+        "works_with": []
+      },
+      "provenance": {
+        "retailer": "Net-a-Porter",
+        "source_url": "https://www.net-a-porter.com/en-us/shop/product/saint-laurent/shoes/high-heel/guermantes-leather-slingback-pumps/46376663163102488",
+        "purchase_price": {
+          "amount": null,
+          "currency": null
+        },
+        "retail_price": {
+          "amount": null,
+          "currency": null
+        },
+        "condition_at_acquisition": "New with tags",
+        "current_condition": "Good",
+        "storage_location": "Main Closet",
+        "acquisition_type": "Purchased"
+      },
+      "wearing_history": {
+        "last_worn": null,
+        "times_worn": 0,
+        "cost_per_wear": null,
+        "outfit_log": []
+      },
+      "meta": {
+        "tags": [
+          "pointed toe",
+          "stiletto heel",
+          "elasticized slingback strap",
+          "leather sole",
+          "Saint Laurent-engraved plaque",
+          "9.5cm heel"
+        ],
+        "notes": null,
+        "claude_context": "Only recommend when little walking is anticipated",
         "rotation": null
       }
     }
