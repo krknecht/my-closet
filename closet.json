@@ -1389,7 +1389,7 @@
     {
       "id": "949cd0a7-2e1d-4cd4-b660-89bdb8495ccd",
       "created_at": "2026-04-08T18:06:52.978Z",
-      "updated_at": "2026-04-08T18:06:52.978Z",
+      "updated_at": "2026-04-08T18:08:40.347Z",
       "status": "active",
       "identity": {
         "name": "Double-breasted wool blazer",
@@ -1409,8 +1409,8 @@
         "subcategory": "Suit jacket"
       },
       "image": {
-        "filename": "949cd0a7-2e1d-4cd4-b660-89bdb8495ccd.jpg",
-        "format": "jpg",
+        "filename": "949cd0a7-2e1d-4cd4-b660-89bdb8495ccd.avif",
+        "format": "avif",
         "alt_images": []
       },
       "visual": {
