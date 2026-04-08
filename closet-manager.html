@@ -178,6 +178,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
       </div>
       <div class="status" id="fetch-status"></div>
       <div class="legend" id="autofill-legend"><span class="legend-dot"></span> Green fields were auto-filled — review before saving</div>
+      <div id="url-img-section" style="display:none;margin-top:9px">
+        <div style="margin-bottom:6px;border:1px solid var(--rule);border-radius:var(--radius-lg);overflow:hidden;background:var(--paper-3);max-height:200px;display:flex;align-items:center;justify-content:center"><img id="url-img-prev-img" src="" alt="" style="max-width:100%;max-height:200px;object-fit:contain;display:block"/></div>
+        <div id="url-img-strip" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"></div>
+      </div>
     </div>
   </div>
   <!-- Manual mode -->
@@ -207,7 +211,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
     </div>
     <div class="row2">
       <div class="field" id="f-colorway"><div class="fl">Colorway (branded)</div><input type="text" id="colorway" placeholder="e.g. Medium Indigo"/></div>
-      <div class="field"><div class="fl">Vintage</div><select id="is-vintage" onchange="toggleVintageEra()"><option value="false">No</option><option value="true">Yes — Vintage</option></select></div>
+      <div class="field"><div class="fl" style="margin-bottom:6px">Vintage</div><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--ink-2)"><input type="checkbox" id="is-vintage" onchange="toggleVintageEra()" style="width:14px;height:14px;accent-color:var(--accent);cursor:pointer"> Yes — Vintage</label></div>
     </div>
     <div class="field" id="vintage-era-field" style="display:none"><div class="fl">Vintage era</div><input type="text" id="vintage-era" placeholder="e.g. 1990s, Circa 2003"/></div>
   </div>
@@ -333,6 +337,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   <!-- §9 Metadata -->
   <div class="fsection">
     <div class="fsh"><span class="fsn">09</span><span class="fsl">Metadata</span><span class="fsr"></span></div>
+    <div class="field"><div class="fl">Rotation</div><select id="rotation" onchange="updatePreview()"><option value="">—</option><option>High</option><option>Medium</option><option>Low</option><option>Rarely</option></select></div>
     <div class="field">
       <div class="fl">Tags</div>
       <div class="tags-wrap" id="tags-wrap"></div>
@@ -344,7 +349,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   <!-- Save bar -->
   <div class="save-bar">
     <div class="save-status" id="save-status"></div>
-    <button class="btn btn-warn" id="delete-btn" onclick="deleteItem()" style="display:none">Archive</button>
+    <button class="btn btn-warn" id="delete-btn" onclick="deleteItem()" style="display:none">Delete</button>
     <button class="btn" onclick="clearForm()">Clear</button>
     <button class="btn btn-accent" id="save-btn" onclick="saveItem()">Save &amp; push ↑</button>
   </div>
@@ -360,9 +365,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   <div class="modal">
     <div class="modal-header"><span class="modal-title">Connection</span><button class="modal-close" onclick="closeGHModal()">×</button></div>
     <div class="modal-body">
-      <div class="modal-intro">Enter your deployed Cloudflare Worker URL and the passphrase you set as a worker secret. Your passphrase is stored only in this browser.</div>
-      <div class="field" style="margin-bottom:10px"><div class="fl">Worker URL</div><input type="url" id="worker-url" placeholder="https://closet-proxy.katerknecht.workers.dev" autocomplete="off"/></div>
-      <div class="field"><div class="fl">Passphrase</div><input type="password" id="worker-passphrase" placeholder="your-secret-passphrase" autocomplete="off"/></div>
+      <div class="modal-intro">Enter your deployed Cloudflare Worker URL and the passphrase you set as a worker secret. Your Anthropic API key is used for URL lookups and photo analysis. All credentials are stored only in this browser.</div>
+      <div class="field" style="margin-bottom:10px"><div class="fl">Worker URL</div><input type="url" id="worker-url" placeholder="https://closet-proxy.doesthislookright.workers.dev" autocomplete="off"/></div>
+      <div class="field" style="margin-bottom:10px"><div class="fl">Passphrase</div><input type="password" id="worker-passphrase" placeholder="your-secret-passphrase" autocomplete="off"/></div>
+      <div class="field"><div class="fl">Anthropic API key</div><input type="password" id="anthropic-key" placeholder="sk-ant-…" autocomplete="off"/></div>
     </div>
     <div class="modal-footer"><button class="btn btn-warn" onclick="clearGHSettings()">Clear</button><button class="btn btn-accent" onclick="saveGHSettings()">Save &amp; connect</button></div>
   </div>
@@ -394,11 +400,12 @@ window._fetchedImageUrl=null;
 // Worker connection
 function ghC(){return{workerUrl:(localStorage.getItem('worker_url')||'').replace(/\/$/,''),passphrase:localStorage.getItem('worker_passphrase')||''};}
 function ghOK(){const c=ghC();return !!(c.workerUrl&&c.passphrase);}
+function anthropicKey(){return localStorage.getItem('anthropic_key')||'';}
 function updateGHBtn(){const b=document.getElementById('gh-btn'),l=document.getElementById('gh-btn-label');if(ghOK()){b.classList.add('connected');l.textContent='Worker';}else{b.classList.remove('connected');l.textContent='Connect';}}
-function openGHModal(){const c=ghC();document.getElementById('worker-url').value=c.workerUrl;document.getElementById('worker-passphrase').value=c.passphrase;document.getElementById('gh-modal').classList.add('open');}
+function openGHModal(){const c=ghC();document.getElementById('worker-url').value=c.workerUrl;document.getElementById('worker-passphrase').value=c.passphrase;document.getElementById('anthropic-key').value=anthropicKey();document.getElementById('gh-modal').classList.add('open');}
 function closeGHModal(){document.getElementById('gh-modal').classList.remove('open');}
-function saveGHSettings(){const u=document.getElementById('worker-url').value.trim(),p=document.getElementById('worker-passphrase').value.trim();if(!u||!p){alert('Fill in both fields.');return;}localStorage.setItem('worker_url',u);localStorage.setItem('worker_passphrase',p);updateGHBtn();closeGHModal();}
-function clearGHSettings(){if(!confirm('Remove connection settings?'))return;['worker_url','worker_passphrase'].forEach(k=>localStorage.removeItem(k));updateGHBtn();closeGHModal();}
+function saveGHSettings(){const u=document.getElementById('worker-url').value.trim(),p=document.getElementById('worker-passphrase').value.trim(),ak=document.getElementById('anthropic-key').value.trim();if(!u||!p){alert('Fill in Worker URL and Passphrase.');return;}localStorage.setItem('worker_url',u);localStorage.setItem('worker_passphrase',p);if(ak)localStorage.setItem('anthropic_key',ak);updateGHBtn();closeGHModal();}
+function clearGHSettings(){if(!confirm('Remove connection settings?'))return;['worker_url','worker_passphrase','anthropic_key'].forEach(k=>localStorage.removeItem(k));updateGHBtn();closeGHModal();}
 async function ghSHA(path){const c=ghC();const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{headers:{'X-Closet-Passphrase':c.passphrase}});if(!r.ok)return null;return (await r.json()).sha||null;}
 async function ghPush(path,content,isBin=false){const c=ghC();if(!c.passphrase)throw new Error('No passphrase configured.');const sha=await ghSHA(path);const b64=isBin?content:btoa(unescape(encodeURIComponent(content)));const body={message:'Update '+path+' via Closet Manager',content:b64};if(sha)body.sha=sha;const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{method:'PUT',headers:{'X-Closet-Passphrase':c.passphrase,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||e.message||'Worker '+r.status);}return r.json();}
 async function ghFetchJSON(path){const c=ghC();const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{headers:{'X-Closet-Passphrase':c.passphrase}});if(!r.ok)return null;const d=await r.json();return JSON.parse(atob(d.content.replace(/\n/g,'')));}
@@ -490,7 +497,7 @@ function updateFormality(){
 }
 
 // Toggles
-function toggleVintageEra(){document.getElementById('vintage-era-field').style.display=document.getElementById('is-vintage').value==='true'?'block':'none';updatePreview();}
+function toggleVintageEra(){document.getElementById('vintage-era-field').style.display=document.getElementById('is-vintage').checked?'block':'none';updatePreview();}
 function toggleLiningMat(){const t=gv2('lining-type');document.getElementById('lining-mat-field').style.display=(t==='Partial'||t==='Full')?'block':'none';updatePreview();}
 
 // Photo upload
@@ -506,9 +513,10 @@ function loadPhoto(file){
 
 // AI analyze
 async function analyzePhoto(){
-  if(!photoBase64)return;const btn=document.getElementById('analyze-btn');btn.disabled=true;btn.textContent='Analyzing…';setSt('photo-status','loading','AI is analyzing the photo…');
+  if(!photoBase64)return;const ak=anthropicKey();if(!ak){alert('Add your Anthropic API key in the Connect modal.');return;}
+  const btn=document.getElementById('analyze-btn');btn.disabled=true;btn.textContent='Analyzing…';setSt('photo-status','loading','AI is analyzing the photo…');
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:'Analyze this clothing photo. Return ONLY valid JSON, no markdown:\n{"color1":null,"color2":null,"pattern":null,"silhouette":null,"weight":null,"dept":null,"cat":null,"fabric_estimate":null,"sleeve_length":null,"length":null}\npattern:Solid|Stripe|Plaid / Check|Floral|Geometric|Animal print|Abstract|Graphic|Embellished|Other\nweight:Sheer|Lightweight|Medium|Medium-heavy|Heavy\ndept:Clothing|Shoes|Bags|Accessories|Jewelry|Activewear|Swimwear|Lingerie & Loungewear\nsleeve_length:Strapless|Sleeveless|Cap sleeve|Short sleeve|Three-quarter|Long sleeve\nlength:Cropped|Hip|Thigh|Waist|Knee|Midi|Maxi|Ankle|Floor',messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:photoMime,data:photoBase64}},{type:'text',text:'Analyze this clothing item.'}]}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ak,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:'Analyze this clothing photo. Return ONLY valid JSON, no markdown:\n{"color1":null,"color2":null,"pattern":null,"silhouette":null,"weight":null,"dept":null,"cat":null,"fabric_estimate":null,"sleeve_length":null,"length":null}\npattern:Solid|Stripe|Plaid / Check|Floral|Geometric|Animal print|Abstract|Graphic|Embellished|Other\nweight:Sheer|Lightweight|Medium|Medium-heavy|Heavy\ndept:Clothing|Shoes|Bags|Accessories|Jewelry|Activewear|Swimwear|Lingerie & Loungewear\nsleeve_length:Strapless|Sleeveless|Cap sleeve|Short sleeve|Three-quarter|Long sleeve\nlength:Cropped|Hip|Thigh|Waist|Knee|Midi|Maxi|Ankle|Floor',messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:photoMime,data:photoBase64}},{type:'text',text:'Analyze this clothing item.'}]}]})});
     const d=await r.json();const text=d.content.filter(b=>b.type==='text').map(b=>b.text).join('');const p=parseJSON(text);let n=0;
     if(p.color1){setV('color1',p.color1);markA('f-color1');n++;}if(p.color2){setV('color2',p.color2);markA('f-color2');n++;}
     if(p.pattern){setSel('pattern',p.pattern);n++;}if(p.weight){setSel('weight',p.weight);n++;}if(p.length){setSel('length',p.length);n++;}if(p.sleeve_length){setSel('sleeve',p.sleeve_length);n++;}
@@ -530,16 +538,44 @@ async function tryShopify(url){
   return{name:d.title,brand:d.vendor,image_url:imgs[0]||null,_body:d.body_html?d.body_html.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():'',_tags:d.tags||[]};}
   catch(e){return null;}
 }
+const _imgCache=new Map();
+async function fetchImageDataUrl(url){
+  if(_imgCache.has(url))return _imgCache.get(url);
+  const r=await fetch(url);const blob=await r.blob();
+  return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=e=>{_imgCache.set(url,e.target.result);res(e.target.result);};fr.onerror=rej;fr.readAsDataURL(blob);});
+}
+function showUrlImageSection(imageUrl,allUrls){
+  document.getElementById('url-img-section').style.display='block';
+  const img=document.getElementById('url-img-prev-img');img.src=imageUrl;
+  const strip=document.getElementById('url-img-strip');strip.innerHTML='';
+  (allUrls||[imageUrl]).forEach((u,i)=>{
+    const thumb=document.createElement('img');
+    thumb.src=u;thumb.title=u;
+    thumb.style.cssText='width:52px;height:66px;object-fit:cover;border-radius:4px;cursor:pointer;border:2px solid '+(i===0?'var(--accent-mid)':'var(--rule)');
+    thumb.onclick=()=>{
+      window._fetchedImageUrl=u;img.src=u;
+      strip.querySelectorAll('img').forEach(t=>t.style.borderColor='var(--rule)');
+      thumb.style.borderColor='var(--accent-mid)';
+    };
+    strip.appendChild(thumb);
+  });
+}
 async function fetchFromURL(){
   const url=document.getElementById('pdp-url').value.trim();if(!url)return;
+  const ak=anthropicKey();if(!ak){alert('Add your Anthropic API key in the Connect modal.');return;}
   const btn=document.getElementById('fetch-btn');btn.disabled=true;btn.textContent='Fetching…';setSt('fetch-status','loading','Fetching product data…');
   try{
     let shopify=null;if(url.includes('/products/')){shopify=await tryShopify(url);}
-    const sys='Extract product details from this URL via web search. Return ONLY valid JSON, no markdown:\n{"name":null,"brand":null,"color1":null,"color2":null,"pattern":null,"silhouette":null,"fabric":[],"weight":null,"dept":null,"cat":null,"subcat":null,"sleeve_length":null,"length":null,"seasons":[],"care":null,"origin":null,"sku":null,"colorway":null,"retailer":null,"tags":[],"image_url":null}\nfabric:[{material,percentage}]\ndept:Clothing|Shoes|Bags|Accessories|Jewelry|Activewear|Swimwear|Lingerie & Loungewear\npattern:Solid|Stripe|Plaid / Check|Floral|Geometric|Animal print|Abstract|Graphic|Embellished|Other\nweight:Sheer|Lightweight|Medium|Medium-heavy|Heavy\nsleeve_length:Strapless|Sleeveless|Cap sleeve|Short sleeve|Three-quarter|Long sleeve\nlength:Cropped|Hip|Thigh|Waist|Knee|Midi|Maxi|Ankle|Floor\nseasons:subset of [spring,summer,fall,winter]\nimage_url:best full-res image URL (strip ?width= from Shopify)';
+    const sys='Extract product details from this URL via web search. Return ONLY valid JSON, no markdown:\n{"name":null,"brand":null,"color1":null,"color2":null,"pattern":null,"silhouette":null,"fabric":[],"weight":null,"dept":null,"cat":null,"subcat":null,"sleeve_length":null,"length":null,"seasons":[],"care":null,"origin":null,"sku":null,"colorway":null,"retailer":null,"tags":[],"image_url":null,"image_urls":[]}\nfabric:[{material,percentage}]\ndept:Clothing|Shoes|Bags|Accessories|Jewelry|Activewear|Swimwear|Lingerie & Loungewear\npattern:Solid|Stripe|Plaid / Check|Floral|Geometric|Animal print|Abstract|Graphic|Embellished|Other\nweight:Sheer|Lightweight|Medium|Medium-heavy|Heavy\nsleeve_length:Strapless|Sleeveless|Cap sleeve|Short sleeve|Three-quarter|Long sleeve\nlength:Cropped|Hip|Thigh|Waist|Knee|Midi|Maxi|Ankle|Floor\nseasons:subset of [spring,summer,fall,winter]\nimage_url:best full-res image URL\nimage_urls:up to 6 product image URLs';
     const msg=shopify?'Extract style details from: '+url+'\n\nDescription: '+shopify._body.slice(0,800):'Extract full product details from: '+url;
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,tools:[{type:'web_search_20250305',name:'web_search'}],system:sys,messages:[{role:'user',content:msg}]})});
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ak,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,tools:[{type:'web_search_20250305',name:'web_search'}],system:sys,messages:[{role:'user',content:msg}]})});
     const data=await r.json();const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');const p=parseJSON(text);
-    if(shopify){if(shopify.name&&!p.name)p.name=shopify.name;if(shopify.brand&&!p.brand)p.brand=shopify.brand;if(shopify.image_url)p.image_url=shopify.image_url;if(shopify._tags)(p.tags=p.tags||[]).push(...shopify._tags);}
+    if(shopify){
+      if(shopify.name&&!p.name)p.name=shopify.name;if(shopify.brand&&!p.brand)p.brand=shopify.brand;
+      if(shopify.image_url&&!p.image_url)p.image_url=shopify.image_url;
+      if(shopify.image_urls&&shopify.image_urls.length)(p.image_urls=p.image_urls||[]).unshift(...shopify.image_urls.filter(u=>!(p.image_urls||[]).includes(u)));
+      if(shopify._tags)(p.tags=p.tags||[]).push(...shopify._tags);
+    }
     let n=0;
     const tf={name:'name',brand:'brand',colorway:'colorway',sku:'sku',retailer:'retailer',color1:'color1',color2:'color2',care:'care',origin:'origin'};
     Object.entries(tf).forEach(([k,id])=>{if(p[k]){setV(id,p[k]);markA('f-'+id);n++;}});
@@ -549,7 +585,8 @@ async function fetchFromURL(){
     if(Array.isArray(p.seasons)){['spring','summer','fall','winter'].forEach(s=>document.getElementById('s-'+s).checked=p.seasons.includes(s));n++;}
     if(Array.isArray(p.tags))p.tags.forEach(t=>{if(t&&!tags.includes(t))tags.push(t);});renderTA(tags,'tags-wrap','rmTag');
     setV('source-url',url);
-    if(p.image_url){window._fetchedImageUrl=p.image_url;setSt('fetch-status','success','Auto-filled '+n+' fields. Product image found — will push to GitHub on save.');}
+    const allImgUrls=[...new Set([p.image_url,...(p.image_urls||[])].filter(Boolean).map(shopFR))];
+    if(allImgUrls.length){window._fetchedImageUrl=allImgUrls[0];showUrlImageSection(allImgUrls[0],allImgUrls);setSt('fetch-status','success','Auto-filled '+n+' fields. Select image below, then Save.');}
     else setSt('fetch-status','success','Auto-filled '+n+' fields.');
     document.getElementById('autofill-legend').classList.add('show');
   }catch(e){setSt('fetch-status','error','Could not extract data — check URL or use Manual mode.');console.error(e);}
@@ -559,7 +596,7 @@ async function fetchFromURL(){
 // Build record
 function buildRecord(id){
   const now=new Date().toISOString(),itemId=id||crypto.randomUUID();
-  const isV=document.getElementById('is-vintage').value==='true';
+  const isV=document.getElementById('is-vintage').checked;
   let ext='jpg';if(photoMime==='image/webp')ext='webp';else if(photoMime==='image/png')ext='png';else if(photoMime==='image/avif')ext='avif';
   else if(window._fetchedImageUrl){const e=window._fetchedImageUrl.split('?')[0].split('.').pop().toLowerCase();if(['jpg','jpeg','webp','png','avif'].includes(e))ext=e==='jpeg'?'jpg':e;}
   let fn=itemId+'.'+ext,fmt=ext;
@@ -580,7 +617,7 @@ function buildRecord(id){
     wearing_profile:{formality:{min:parseInt(document.getElementById('form-lo').value),max:parseInt(document.getElementById('form-hi').value)},occasions:[...occasions],feels:[...feels],style_notes:gv('style-notes')||null,works_with:[]},
     provenance:{retailer:gv('retailer')||null,source_url:gv('source-url')||null,purchase_price:{amount:parseFloat(gv('purchase-price'))||null,currency:parseFloat(gv('purchase-price'))?'USD':null},retail_price:{amount:parseFloat(gv('retail-price'))||null,currency:parseFloat(gv('retail-price'))?'USD':null},condition_at_acquisition:gv2('condition-acq')||null,current_condition:gv2('condition-now')||null,storage_location:gv('storage')||null,acquisition_type:gv2('acquisition-type')||null},
     wearing_history:wh,
-    meta:{tags:[...tags],notes:gv('notes')||null,claude_context:gv('claude-context')||null}
+    meta:{tags:[...tags],notes:gv('notes')||null,claude_context:gv('claude-context')||null,rotation:gv2('rotation')||null}
   };
 }
 
@@ -605,26 +642,185 @@ async function saveItem(){
     await ghPush('closet.json',JSON.stringify(closetData,null,2));
     editingId=rec.id;window._fetchedImageUrl=null;
     document.getElementById('delete-btn').style.display='inline-block';
+    st.textContent='Rebuilding gallery…';await buildAndPushIndex();
     renderList();st.textContent='✓ Saved'+(imgOK?' + image':'')+' — Cloudflare updates in ~60s';
     setTimeout(()=>st.textContent='',7000);
   }catch(e){st.textContent='✗ '+e.message;console.error(e);}
   btn.disabled=false;btn.textContent='Save & push ↑';
 }
 
-// Archive
+// Delete (permanent)
 async function deleteItem(){
   if(!editingId)return;const item=closetData.items.find(i=>i.id===editingId);if(!item)return;
-  if(!confirm('Archive "'+item.identity.name+'"? It will be hidden from the gallery.'))return;
-  const st=document.getElementById('save-status');st.textContent='Archiving…';
-  try{const idx=closetData.items.findIndex(i=>i.id===editingId);closetData.items[idx].status='archived';closetData.items[idx].updated_at=new Date().toISOString();await ghPush('closet.json',JSON.stringify(closetData,null,2));clearForm();renderList();st.textContent='✓ Archived.';setTimeout(()=>st.textContent='',4000);}
-  catch(e){st.textContent='✗ '+e.message;}
+  if(!confirm('Permanently delete "'+item.identity.name+'"? This cannot be undone.'))return;
+  const st=document.getElementById('save-status');st.textContent='Deleting…';
+  try{
+    closetData.items=closetData.items.filter(i=>i.id!==editingId);
+    closetData.schema_updated=new Date().toISOString().split('T')[0];
+    await ghPush('closet.json',JSON.stringify(closetData,null,2));
+    st.textContent='Rebuilding gallery…';await buildAndPushIndex();
+    clearForm();renderList();st.textContent='✓ Deleted.';setTimeout(()=>st.textContent='',4000);
+  }catch(e){st.textContent='✗ '+e.message;}
+}
+
+// Build & push index.html
+function buildIndexHTML(){
+  const activeItems=closetData.items.filter(i=>i.status==='active'||!i.status);
+  const itemsJSON=JSON.stringify(activeItems);
+  return`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>My Closet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c1917;--ink-2:#57534e;--ink-3:#a8a29e;--paper:#faf9f7;--paper-2:#f2f0ec;--paper-3:#e8e5df;--rule:#ddd9d2;--accent:#2d4a2d;--accent-light:#e8f0e8;--accent-mid:#4a7c4a;--gold:#8b6914;--gold-light:#f5edd6;--radius:4px;--radius-lg:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:.4}
+body::after{content:'';position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent) 0%,var(--accent-mid) 50%,transparent 100%);z-index:100;pointer-events:none}
+header{border-bottom:1px solid var(--rule);padding:1.125rem 2rem;display:flex;align-items:center;gap:1.5rem;background:var(--paper);position:sticky;top:0;z-index:50}
+.header-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:.04em}
+.header-sub{font-size:9px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase}
+.header-count{font-size:10px;color:var(--ink-3);margin-left:auto}
+.search-bar{padding:.75rem 2rem;border-bottom:1px solid var(--rule);background:var(--paper-2)}
+.search-bar input{width:100%;max-width:400px;font-family:'DM Mono',monospace;font-size:12px;padding:7px 11px;border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper);color:var(--ink);outline:none}
+.search-bar input:focus{border-color:var(--ink-3)}
+.filter-bar{padding:.5rem 2rem;border-bottom:1px solid var(--rule);display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--paper)}
+.filter-chip{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border:1px solid var(--rule);border-radius:20px;background:var(--paper);color:var(--ink-3);cursor:pointer;transition:all .15s}
+.filter-chip:hover,.filter-chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--rule);padding:0}
+.card{background:var(--paper);cursor:pointer;transition:background .1s;overflow:hidden}
+.card:hover{background:var(--paper-2)}
+.card-img{aspect-ratio:3/4;overflow:hidden;background:var(--paper-3);display:flex;align-items:center;justify-content:center;font-size:2rem}
+.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.card:hover .card-img img{transform:scale(1.03)}
+.card-info{padding:.625rem .75rem}
+.card-brand{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.card-name{font-size:11px;color:var(--ink-2);line-height:1.4;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-cat{font-size:9px;color:var(--ink-3)}
+.card-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.badge{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:20px}
+.badge-vintage{background:var(--gold-light);color:var(--gold)}
+.badge-cat{background:var(--paper-3);color:var(--ink-3)}
+.empty{padding:3rem 2rem;text-align:center;font-size:12px;color:var(--ink-3);font-style:italic;font-family:'Cormorant Garamond',serif;grid-column:1/-1}
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(28,25,23,.4);z-index:200}
+.drawer-overlay.open{display:block}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:min(480px,100vw);background:var(--paper);border-left:1px solid var(--rule);z-index:201;overflow-y:auto;transform:translateX(100%);transition:transform .25s ease}
+.drawer.open{transform:none}
+.drawer-header{padding:1.125rem 1.375rem .875rem;border-bottom:1px solid var(--rule);display:flex;align-items:flex-start;gap:12px;position:sticky;top:0;background:var(--paper);z-index:10}
+.drawer-img{width:70px;height:90px;border-radius:var(--radius);overflow:hidden;flex-shrink:0;background:var(--paper-3);display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.drawer-img img{width:100%;height:100%;object-fit:cover}
+.drawer-titles{flex:1;min-width:0}
+.drawer-brand{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.drawer-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;line-height:1.2;margin-bottom:4px}
+.drawer-cat{font-size:10px;color:var(--ink-3)}
+.drawer-close{background:none;border:none;font-size:22px;color:var(--ink-3);cursor:pointer;padding:2px 4px;flex-shrink:0}
+.drawer-close:hover{color:var(--ink)}
+.drawer-body{padding:1rem 1.375rem}
+.dsec{margin-bottom:1.25rem}
+.dsh{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.5rem;padding-bottom:.25rem;border-bottom:1px solid var(--rule)}
+.drow{display:flex;gap:.5rem;margin-bottom:.25rem;font-size:11px}
+.dlbl{color:var(--ink-3);min-width:110px;flex-shrink:0}
+.dval{color:var(--ink-2);line-height:1.5}
+.dpill-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.dpill{font-size:9px;padding:2px 8px;border:1px solid var(--rule);border-radius:20px;color:var(--ink-3)}
+.edit-link{display:inline-flex;align-items:center;gap:5px;margin-top:1rem;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border:1px solid var(--rule);border-radius:var(--radius);color:var(--ink-3);text-decoration:none;transition:all .15s}
+.edit-link:hover{background:var(--paper-3);color:var(--ink);border-color:var(--ink-3)}
+</style>
+</head>
+<body>
+<header>
+  <div><div class="header-title">Closet</div><div class="header-sub">Gallery</div></div>
+  <span class="header-count" id="gal-count"></span>
+</header>
+<div class="search-bar"><input id="gal-search" placeholder="Search name, brand, category, tag…" oninput="filterGallery()"/></div>
+<div class="filter-bar" id="dept-chips"></div>
+<div class="gallery" id="gallery"></div>
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-img" id="d-img"></div>
+    <div class="drawer-titles">
+      <div class="drawer-brand" id="d-brand"></div>
+      <div class="drawer-name" id="d-name"></div>
+      <div class="drawer-cat" id="d-cat"></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-body" id="d-body"></div>
+</div>
+<script>
+const allItems=${itemsJSON};
+const itemsMap=Object.fromEntries(allItems.map(i=>[i.id,i]));
+const EMOJI={'Clothing':'🧺','Shoes':'👟','Bags':'👜','Accessories':'💍','Jewelry':'💎','Activewear':'🏃','Swimwear':'🌊','Lingerie & Loungewear':'🌙'};
+const FL={1:'Loungewear',2:'Casual',3:'Weekend casual',4:'Smart casual',5:'Smart casual (elevated)',6:'Business casual',7:'Business formal',8:'Cocktail / Evening',9:'Formal / Gala',10:'Black tie'};
+let activeFilter='All',searchQ='';
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function initChips(){
+  const depts=['All',...new Set(allItems.map(i=>i.category.department).filter(Boolean))];
+  const bar=document.getElementById('dept-chips');bar.innerHTML='';
+  depts.forEach(d=>{const b=document.createElement('button');b.className='filter-chip'+(d==='All'?' active':'');b.textContent=d;b.onclick=()=>{activeFilter=d;bar.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.textContent===d));filterGallery();};bar.appendChild(b);});
+}
+function filterGallery(){
+  const q=document.getElementById('gal-search').value.toLowerCase().trim();searchQ=q;
+  const filtered=allItems.filter(i=>{
+    if(activeFilter!=='All'&&i.category.department!==activeFilter)return false;
+    if(!q)return true;
+    return[i.identity.name,i.identity.brand,i.category.category,i.category.subcategory,...(i.meta.tags||[])].join(' ').toLowerCase().includes(q);
+  });
+  const gal=document.getElementById('gallery');gal.innerHTML='';
+  document.getElementById('gal-count').textContent=filtered.length+' items';
+  if(!filtered.length){gal.innerHTML='<div class="empty">No items match your search.</div>';return;}
+  filtered.forEach(item=>{
+    const el=document.createElement('div');el.className='card';el.setAttribute('data-id',item.id);el.onclick=()=>openDrawer(item.id);
+    const dept=item.category.department||'';
+    el.innerHTML='<div class="card-img">'+(item.image&&item.image.filename?'<img src="'+esc(item.image.filename)+'" alt="'+esc(item.identity.name)+'" loading="lazy" onerror="this.parentNode.innerHTML=\\''+esc(EMOJI[dept]||'🧺')+'\\'"/>':'<span>'+esc(EMOJI[dept]||'🧺')+'</span>')+'</div><div class="card-info"><div class="card-brand">'+esc(item.identity.brand||'')+'</div><div class="card-name">'+esc(item.identity.name)+'</div><div class="card-cat">'+esc([item.category.category,item.category.subcategory].filter(Boolean).join(' › '))+'</div><div class="card-badges">'+(item.identity.vintage&&item.identity.vintage.is_vintage?'<span class="badge badge-vintage">Vintage</span>':'')+'</div></div>';
+    gal.appendChild(el);
+  });
+}
+function openDrawer(id){
+  const item=itemsMap[id];if(!item)return;
+  const dept=item.category.department||'';
+  const imgEl=document.getElementById('d-img');
+  imgEl.innerHTML=item.image&&item.image.filename?'<img src="'+esc(item.image.filename)+'" alt="'+esc(item.identity.name)+'" onerror="this.parentNode.innerHTML=\\''+esc(EMOJI[dept]||'🧺')+'\\'"/>':'<span>'+esc(EMOJI[dept]||'🧺')+'</span>';
+  document.getElementById('d-brand').textContent=item.identity.brand||'';
+  document.getElementById('d-name').textContent=item.identity.name;
+  document.getElementById('d-cat').textContent=[item.category.department,item.category.category,item.category.subcategory].filter(Boolean).join(' › ');
+  const body=document.getElementById('d-body');let h='';
+  function row(l,v){return v?'<div class="drow"><span class="dlbl">'+l+'</span><span class="dval">'+esc(String(v))+'</span></div>':'';}
+  h+='<div class="dsec"><div class="dsh">Identity</div>';
+  if(item.identity.vintage&&item.identity.vintage.is_vintage)h+='<div class="drow"><span class="dlbl">Vintage</span><span class="dval">Yes'+(item.identity.vintage.era?' — '+esc(item.identity.vintage.era):'')+'</span></div>';
+  h+=row('Colorway',item.identity.colorway_name)+row('SKU',item.identity.sku)+row('Collection',item.identity.collection_season)+row('Year acquired',item.identity.year_acquired)+'</div>';
+  h+='<div class="dsec"><div class="dsh">Visual</div>'+row('Colors',[item.visual.colors&&item.visual.colors.primary,item.visual.colors&&item.visual.colors.secondary,item.visual.colors&&item.visual.colors.tertiary].filter(Boolean).join(', '))+row('Pattern',item.visual.pattern)+row('Print',item.visual.print_description)+row('Silhouette',item.visual.silhouette)+row('Length',item.visual.length)+row('Sleeve',item.visual.sleeve_length)+'</div>';
+  if(item.construction.fabric&&item.construction.fabric.length){h+='<div class="dsec"><div class="dsh">Construction</div>';h+=row('Fabric',item.construction.fabric.map(f=>f.material+(f.percentage?' '+f.percentage+'%':'')).join(', '));h+=row('Weight',item.construction.weight)+row('Structure',item.construction.structure)+row('Seasons',(item.construction.seasons||[]).join(', '))+row('Care',item.construction.care)+row('Origin',item.construction.country_of_origin)+'</div>';}
+  if(item.wearing_profile){const fp=item.wearing_profile.formality;h+='<div class="dsec"><div class="dsh">Wearing profile</div>';if(fp)h+=row('Formality',FL[fp.min]+' → '+FL[fp.max]);h+=row('Style notes',item.wearing_profile.style_notes);if((item.wearing_profile.occasions||[]).length)h+='<div class="drow"><span class="dlbl">Occasions</span><div class="dpill-wrap">'+item.wearing_profile.occasions.map(o=>'<span class="dpill">'+esc(o)+'</span>').join('')+'</div></div>';if((item.wearing_profile.feels||[]).length)h+='<div class="drow"><span class="dlbl">Feels</span><div class="dpill-wrap">'+item.wearing_profile.feels.map(f=>'<span class="dpill">'+esc(f)+'</span>').join('')+'</div></div>';h+='</div>';}
+  if(item.provenance){h+='<div class="dsec"><div class="dsh">Provenance</div>'+row('Retailer',item.provenance.retailer)+row('Acquired',item.provenance.acquisition_type)+(item.provenance.purchase_price&&item.provenance.purchase_price.amount?row('Price','$'+item.provenance.purchase_price.amount):'')+row('Condition',item.provenance.current_condition)+row('Storage',item.provenance.storage_location)+'</div>';}
+  if(item.meta&&item.meta.claude_context)h+='<div class="dsec"><div class="dsh">Notes for Claude</div><div style="font-size:11px;color:var(--ink-2);line-height:1.6;padding:6px 9px;background:var(--paper-2);border-radius:var(--radius);border-left:2px solid var(--ink-3)">'+esc(item.meta.claude_context)+'</div></div>';
+  h+='<a class="edit-link" href="closet-manager.html">Edit in Manager ↗</a>';
+  body.innerHTML=h;
+  document.getElementById('drawer-overlay').classList.add('open');document.getElementById('drawer').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){document.getElementById('drawer-overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+initChips();filterGallery();
+<\/script>
+</body>
+</html>`;
+}
+async function buildAndPushIndex(){
+  try{await ghPush('index.html',buildIndexHTML());}
+  catch(e){console.warn('Index push failed:',e.message);}
 }
 
 // Load item into form
 function loadItem(item){
   editingId=item.id;window._fetchedImageUrl=null;photoBase64=null;
   setV('name',item.identity.name||'');setV('brand',item.identity.brand||'');setV('collection',item.identity.collection_season||'');setV('year-acquired',item.identity.year_acquired||'');setV('sku',item.identity.sku||'');setV('colorway',item.identity.colorway_name||'');
-  document.getElementById('is-vintage').value=item.identity.vintage?.is_vintage?'true':'false';toggleVintageEra();setV('vintage-era',item.identity.vintage?.era||'');
+  document.getElementById('is-vintage').checked=!!(item.identity.vintage?.is_vintage);toggleVintageEra();setV('vintage-era',item.identity.vintage?.era||'');
   setSel('dept',item.category.department||'');onDeptChange();setSel('cat',item.category.category||'');onCatChange();setSel('subcat',item.category.subcategory||'');
   setV('color1',item.visual.colors?.primary||'');setV('color2',item.visual.colors?.secondary||'');setV('color3',item.visual.colors?.tertiary||'');
   setSel('pattern',item.visual.pattern||'');setSel('length',item.visual.length||'');setSel('silhouette',item.visual.silhouette||'');setSel('sleeve',item.visual.sleeve_length||'');setV('print-desc',item.visual.print_description||'');setChecked('embel-wrap',item.visual.embellishment||[]);
@@ -636,8 +832,10 @@ function loadItem(item){
   document.getElementById('form-lo').value=item.wearing_profile.formality?.min||3;document.getElementById('form-hi').value=item.wearing_profile.formality?.max||7;updateFormality();
   occasions=[...(item.wearing_profile.occasions||[])];feels=[...(item.wearing_profile.feels||[])];renderTA(occasions,'occ-wrap','rmOcc');renderTA(feels,'feels-wrap','rmFeels');setV('style-notes',item.wearing_profile.style_notes||'');
   setV('retailer',item.provenance.retailer||'');setSel('acquisition-type',item.provenance.acquisition_type||'');setV('source-url',item.provenance.source_url||'');setV('purchase-price',item.provenance.purchase_price?.amount||'');setV('retail-price',item.provenance.retail_price?.amount||'');setSel('condition-acq',item.provenance.condition_at_acquisition||'');setSel('condition-now',item.provenance.current_condition||'');setV('storage',item.provenance.storage_location||'');
-  tags=[...(item.meta.tags||[])];renderTA(tags,'tags-wrap','rmTag');setV('notes',item.meta.notes||'');setV('claude-context',item.meta.claude_context||'');
+  tags=[...(item.meta.tags||[])];renderTA(tags,'tags-wrap','rmTag');setV('notes',item.meta.notes||'');setV('claude-context',item.meta.claude_context||'');setSel('rotation',item.meta.rotation||'');
   document.getElementById('delete-btn').style.display='inline-block';document.getElementById('autofill-legend').classList.remove('show');document.querySelectorAll('.autofilled').forEach(e=>e.classList.remove('autofilled'));
+  document.getElementById('url-img-section').style.display='none';
+  if(item.image&&item.image.filename){const w=document.getElementById('img-prev'),i=document.getElementById('img-prev-img');i.src=item.image.filename;w.style.display='flex';}else{document.getElementById('img-prev').style.display='none';}
   document.querySelector('.form-panel').scrollTop=0;renderList();updatePreview();
 }
 
@@ -646,11 +844,12 @@ function newItem(){editingId=null;clearForm();}
 function clearForm(){
   editingId=null;photoBase64=null;photoMime='image/jpeg';window._fetchedImageUrl=null;occasions=[];feels=[];tags=[];
   ['name','brand','collection','year-acquired','sku','colorway','vintage-era','color1','color2','color3','print-desc','cut','size','inseam','fit-notes','style-notes','retailer','source-url','purchase-price','retail-price','storage','notes','claude-context','pdp-url','care','origin','lining-mat'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  ['dept','cat','subcat','pattern','length','silhouette','sleeve','weight','structure','lining-type','size-system','fit-relative','condition-acq','condition-now','acquisition-type'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  document.getElementById('is-vintage').value='false';toggleVintageEra();toggleLiningMat();
+  ['dept','cat','subcat','pattern','length','silhouette','sleeve','weight','structure','lining-type','size-system','fit-relative','condition-acq','condition-now','acquisition-type','rotation'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('is-vintage').checked=false;toggleVintageEra();toggleLiningMat();
   document.getElementById('fabric-rows').innerHTML='';
   ['spring','summer','fall','winter'].forEach(s=>document.getElementById('s-'+s).checked=false);
   document.querySelectorAll('#embel-wrap input,#sustain-wrap input').forEach(cb=>cb.checked=false);
+  document.getElementById('url-img-section').style.display='none';
   document.getElementById('form-lo').value=3;document.getElementById('form-hi').value=7;updateFormality();
   renderTA([],'tags-wrap','rmTag');renderTA([],'occ-wrap','rmOcc');renderTA([],'feels-wrap','rmFeels');
   onDeptChange();document.getElementById('img-prev').style.display='none';document.getElementById('analyze-bar').style.display='none';
@@ -677,6 +876,7 @@ function attachL(){document.querySelectorAll('input[type=text],input[type=url],i
 
 // Init
 updateGHBtn();updateFormality();initCBs();addFabricRow();onDeptChange();attachL();updatePreview();loadCloset();
+if(!ghOK())openGHModal();
 </script>
 </body>
 </html>
