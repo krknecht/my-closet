@@ -10,7 +10,7 @@
       "status": "active",
       "identity": {
         "name": "Mid-Rise Straight Jeans",
-        "brand": "ChloÃÂ©",
+        "brand": "ChloÃÂÃÂ©",
         "collection_season": null,
         "year_acquired": 2026,
         "vintage": {
@@ -118,7 +118,7 @@
           "pink denim",
           "luxury denim",
           "designer jeans",
-          "ChloÃÂ©"
+          "ChloÃÂÃÂ©"
         ],
         "notes": null,
         "claude_context": null
@@ -258,7 +258,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Vintage Hourglass CrÃÂªpe 'CC' Jacket",
+        "name": "Vintage Hourglass CrÃÂÃÂªpe 'CC' Jacket",
         "brand": "Chanel",
         "collection_season": null,
         "year_acquired": null,
@@ -713,7 +713,7 @@
           "Summer weekends"
         ],
         "feels": [],
-        "style_notes": "A step above jean shorts. Pills easily Ã¢ÂÂ handle with care.",
+        "style_notes": "A step above jean shorts. Pills easily ÃÂ¢ÃÂÃÂ handle with care.",
         "works_with": []
       },
       "provenance": {
@@ -750,7 +750,7 @@
           "ecru"
         ],
         "notes": null,
-        "claude_context": "Pills easily Ã¢ÂÂ avoid abrasive surfaces and rough washing."
+        "claude_context": "Pills easily ÃÂ¢ÃÂÃÂ avoid abrasive surfaces and rough washing."
       }
     },
     {
@@ -759,7 +759,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Lowell Wrap Belt in Leather Ã¢ÂÂ Bone",
+        "name": "Lowell Wrap Belt in Leather ÃÂ¢ÃÂÃÂ Bone",
         "brand": "KALLMEYER",
         "collection_season": null,
         "year_acquired": 2026,
@@ -880,7 +880,7 @@
       "updated_at": "2026-04-07T00:00:00Z",
       "status": "active",
       "identity": {
-        "name": "Lowell Wrap Belt in Leather Ã¢ÂÂ Dark Brown",
+        "name": "Lowell Wrap Belt in Leather ÃÂ¢ÃÂÃÂ Dark Brown",
         "brand": "KALLMEYER",
         "collection_season": null,
         "year_acquired": 2026,
@@ -1152,7 +1152,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "MÃÂ©lange weave Ã¢ÂÂ subtle tonal variation in the fabric.",
+        "print_description": "MÃÂÃÂ©lange weave ÃÂ¢ÃÂÃÂ subtle tonal variation in the fabric.",
         "silhouette": "Wide-leg",
         "length": "Floor",
         "embellishment": [
@@ -1244,7 +1244,7 @@
           "floor length",
           "suiting",
           "viscose wool",
-          "mÃÂ©lange",
+          "mÃÂÃÂ©lange",
           "tailored",
           "SS26",
           "TWP"
@@ -1287,7 +1287,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "MÃÂ©lange weave Ã¢ÂÂ subtle tonal variation in the fabric.",
+        "print_description": "MÃÂÃÂ©lange weave ÃÂ¢ÃÂÃÂ subtle tonal variation in the fabric.",
         "silhouette": "Boxy",
         "length": "Cropped",
         "embellishment": [
@@ -1374,7 +1374,7 @@
         "tags": [
           "viscose wool",
           "suiting blend",
-          "mÃÂ©lange",
+          "mÃÂÃÂ©lange",
           "structured",
           "draped",
           "button down",
@@ -1420,7 +1420,7 @@
           "tertiary": null
         },
         "pattern": "Solid",
-        "print_description": "Grey mÃÂ©lange wool",
+        "print_description": "Grey mÃÂÃÂ©lange wool",
         "silhouette": "Double-breasted",
         "length": "Thigh",
         "sleeve_length": "Long sleeve",
@@ -1763,6 +1763,135 @@
           "embossed buttons",
           "made in italy",
           "strong shoulders"
+        ],
+        "notes": null,
+        "claude_context": null,
+        "rotation": null
+      }
+    },
+    {
+      "id": "938426ac-998c-405c-bc79-2d6d74241823",
+      "created_at": "2026-04-08T21:47:51.800Z",
+      "updated_at": "2026-04-08T21:47:51.800Z",
+      "status": "active",
+      "identity": {
+        "name": "Slingbacks - Crumpled shiny lambskin",
+        "brand": "CHANEL",
+        "collection_season": "SS26",
+        "year_acquired": 2026,
+        "vintage": {
+          "is_vintage": false,
+          "era": null
+        },
+        "sku": "G45509B24102U9345",
+        "colorway_name": "Dark brown & red"
+      },
+      "category": {
+        "department": "Shoes",
+        "category": "Heels",
+        "subcategory": "Slingback"
+      },
+      "image": {
+        "filename": "938426ac-998c-405c-bc79-2d6d74241823.png",
+        "format": "png",
+        "alt_images": []
+      },
+      "visual": {
+        "colors": {
+          "primary": "Dark brown",
+          "secondary": "Red",
+          "tertiary": null
+        },
+        "pattern": "Solid",
+        "print_description": null,
+        "silhouette": null,
+        "length": null,
+        "sleeve_length": null,
+        "embellishment": [
+          "None"
+        ]
+      },
+      "construction": {
+        "fabric": [
+          {
+            "material": "Lambskin",
+            "percentage": 100
+          }
+        ],
+        "lining": {
+          "type": null,
+          "material": null
+        },
+        "weight": null,
+        "structure": null,
+        "seasons": [
+          "spring",
+          "summer",
+          "fall",
+          "winter"
+        ],
+        "care": "Store in a cool, dry place away from direct sunlight. Clean gently with a soft cloth to preserve the leather finish",
+        "country_of_origin": null,
+        "sustainability": [
+          "None"
+        ]
+      },
+      "fit": {
+        "cut": null,
+        "size": "39.5",
+        "size_system": "EU",
+        "inseam_length": null,
+        "fit_notes": null,
+        "fit_relative": null
+      },
+      "wearing_profile": {
+        "formality": {
+          "min": 3,
+          "max": 7
+        },
+        "occasions": [
+          "Work",
+          "Day out",
+          "Date Night"
+        ],
+        "feels": [
+          "Cute",
+          "Playful"
+        ],
+        "style_notes": "Pair with a red or chocolate brown bag, or red scarf or sweater",
+        "works_with": []
+      },
+      "provenance": {
+        "retailer": "CHANEL",
+        "source_url": "https://www.chanel.com/us/fashion/p/G45509B24102U9345/slingbacks-crumpled-shiny-lambskin/",
+        "purchase_price": {
+          "amount": null,
+          "currency": null
+        },
+        "retail_price": {
+          "amount": null,
+          "currency": null
+        },
+        "condition_at_acquisition": "New with tags",
+        "current_condition": null,
+        "storage_location": "Main Closet",
+        "acquisition_type": "Purchased"
+      },
+      "wearing_history": {
+        "last_worn": null,
+        "times_worn": 0,
+        "cost_per_wear": null,
+        "outfit_log": []
+      },
+      "meta": {
+        "tags": [
+          "luxury",
+          "designer",
+          "slingback",
+          "crumpled texture",
+          "90mm heel",
+          "Spring Summer 2026 Collection",
+          "glossy finish"
         ],
         "notes": null,
         "claude_context": null,
