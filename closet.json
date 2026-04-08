@@ -879,12 +879,12 @@
     {
       "id": "1a461c10-740b-4d8e-b60d-43b78639678f",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-07T00:00:00Z",
+      "updated_at": "2026-04-08T21:57:47.667Z",
       "status": "active",
       "identity": {
-        "name": "Lowell Wrap Belt in Leather ÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Dark Brown",
+        "name": "Lowell Wrap Belt in Leather Dark Brown",
         "brand": "KALLMEYER",
-        "collection_season": null,
+        "collection_season": "SS26",
         "year_acquired": 2026,
         "vintage": {
           "is_vintage": false,
@@ -912,11 +912,11 @@
         "pattern": "Solid",
         "print_description": null,
         "silhouette": null,
-        "length": null,
+        "length": "Cropped",
+        "sleeve_length": "Short sleeve",
         "embellishment": [
           "Hardware"
-        ],
-        "sleeve_length": null
+        ]
       },
       "construction": {
         "fabric": [
@@ -930,7 +930,7 @@
           "material": null
         },
         "weight": "Medium",
-        "structure": null,
+        "structure": "Semi-structured",
         "seasons": [
           "spring",
           "summer",
@@ -949,7 +949,7 @@
         "size_system": "One size",
         "inseam_length": null,
         "fit_notes": null,
-        "fit_relative": null
+        "fit_relative": "True to size"
       },
       "wearing_profile": {
         "formality": {
@@ -966,14 +966,14 @@
         "source_url": "https://kallmeyer.nyc/products/dkss26a0113-lowell-wrap-belt-leather-bone-gold",
         "purchase_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "retail_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
-        "condition_at_acquisition": null,
-        "current_condition": null,
+        "condition_at_acquisition": "New with tags",
+        "current_condition": "Good",
         "storage_location": null,
         "acquisition_type": "Purchased"
       },
@@ -994,7 +994,8 @@
           "accessories"
         ],
         "notes": null,
-        "claude_context": null
+        "claude_context": null,
+        "rotation": null
       }
     },
     {
