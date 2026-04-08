@@ -662,7 +662,7 @@ async function deleteItem(){
 function buildIndexHTML(){
   const activeItems=closetData.items.filter(i=>i.status==='active'||!i.status);
   const itemsJSON=JSON.stringify(activeItems);
-  // ↓ keep in sync with index.html
+  // keep in sync with index.html
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -670,133 +670,155 @@ function buildIndexHTML(){
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>My Closet</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#1c1917;--ink-2:#57534e;--ink-3:#a8a29e;--paper:#faf9f7;--paper-2:#f2f0ec;--paper-3:#e8e5df;--rule:#ddd9d2;--accent:#2d4a2d;--accent-light:#e8f0e8;--accent-mid:#4a7c4a;--gold:#8b6914;--gold-light:#f5edd6;--radius:4px;--radius-lg:8px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Mono',monospace;background:var(--paper);color:var(--ink);min-height:100vh}
-body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:1000;opacity:.4}
-body::after{content:'';position:fixed;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent) 0%,var(--accent-mid) 50%,transparent 100%);z-index:100;pointer-events:none}
-header{border-bottom:1px solid var(--rule);padding:1.125rem 2rem;display:flex;align-items:center;gap:1.5rem;background:var(--paper);position:sticky;top:0;z-index:50}
-.header-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;letter-spacing:.04em}
-.header-sub{font-size:9px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase}
-.header-count{font-size:10px;color:var(--ink-3);margin-left:auto}
-.add-btn{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border:1px solid var(--accent-mid);border-radius:var(--radius);background:var(--accent-light);color:var(--accent);text-decoration:none;transition:all .15s;white-space:nowrap}
-.add-btn:hover{background:var(--accent);color:#fff}
-.search-bar{padding:.75rem 2rem;border-bottom:1px solid var(--rule);background:var(--paper-2)}
-.search-bar input{width:100%;max-width:400px;font-family:'DM Mono',monospace;font-size:12px;padding:7px 11px;border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper);color:var(--ink);outline:none}
-.search-bar input:focus{border-color:var(--ink-3)}
-.filter-panel{border-bottom:1px solid var(--rule);background:var(--paper-2)}
-.fp-row{display:flex;align-items:center;gap:8px;padding:.45rem 1.5rem;border-bottom:1px solid var(--rule);flex-wrap:wrap;min-height:34px}
-.fp-row:last-child{border-bottom:none}
-.fp-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);min-width:68px;flex-shrink:0}
-.fp-chips{display:flex;flex-wrap:wrap;gap:5px;flex:1}
-.fp-chip{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border:1px solid var(--rule);border-radius:20px;background:var(--paper);color:var(--ink-3);cursor:pointer;transition:all .12s;white-space:nowrap}
-.fp-chip:hover{border-color:var(--ink-3);color:var(--ink)}
-.fp-chip.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.fp-sort{font-family:'DM Mono',monospace;font-size:10px;padding:4px 8px;border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper);color:var(--ink-2);cursor:pointer;outline:none;-webkit-appearance:none}
-.fp-clear{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border:1px solid var(--rule);border-radius:20px;background:transparent;color:var(--ink-3);cursor:pointer;white-space:nowrap;transition:all .12s;margin-left:auto}
-.fp-clear:hover{color:var(--warn);border-color:#e8c8be}
-.fp-form-row{display:flex;align-items:center;gap:8px;flex:1}
-.fp-form-val{font-size:10px;font-weight:500;color:var(--ink-2);min-width:18px;text-align:center}
-.fp-form-row input[type=range]{flex:1;-webkit-appearance:none;height:2px;background:var(--rule);border-radius:2px;outline:none;cursor:pointer}
-.fp-form-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--ink);cursor:pointer;border:2px solid var(--paper);box-shadow:0 0 0 1px var(--ink)}
-.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--rule);padding:0}
-.card{background:var(--paper);cursor:pointer;transition:background .1s;overflow:hidden}
-.card:hover{background:var(--paper-2)}
-.card-img{aspect-ratio:3/4;overflow:hidden;background:var(--paper-3);display:flex;align-items:center;justify-content:center;font-size:2rem}
-.card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
-.card:hover .card-img img{transform:scale(1.03)}
-.card-info{padding:.625rem .75rem}
-.card-brand{font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
-.card-name{font-size:11px;color:var(--ink-2);line-height:1.4;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card-cat{font-size:9px;color:var(--ink-3)}
-.card-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
-.badge{font-size:8px;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:20px}
-.badge-vintage{background:var(--gold-light);color:var(--gold)}
-.badge-cat{background:var(--paper-3);color:var(--ink-3)}
-.empty{padding:3rem 2rem;text-align:center;font-size:12px;color:var(--ink-3);font-style:italic;font-family:'Cormorant Garamond',serif;grid-column:1/-1}
-.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(28,25,23,.4);z-index:200}
+body{font-family:'Inter',Helvetica,'Helvetica Neue',Arial,sans-serif;background:#fff;color:#1a1a1a;min-height:100vh;font-size:13px;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+header{border-bottom:1px solid #e5e5e5;background:#fff;position:sticky;top:0;z-index:100}
+.header-inner{display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:52px}
+.wordmark{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:.06em;color:#000}
+.header-right{display:flex;align-items:center;gap:1.75rem}
+.gal-count-lbl{font-size:11px;color:#767676}
+.add-item-link{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#000;border-bottom:1px solid #000;padding-bottom:1px;transition:opacity .15s}
+.add-item-link:hover{opacity:.5}
+.page-body{display:flex;align-items:flex-start}
+.sidebar{width:220px;flex-shrink:0;border-right:1px solid #e5e5e5;min-height:calc(100vh - 53px);position:sticky;top:53px;overflow-y:auto;max-height:calc(100vh - 53px)}
+.search-wrap{padding:1rem 1.25rem;border-bottom:1px solid #e5e5e5}
+.search-wrap input{width:100%;font-family:inherit;font-size:12px;border:none;border-bottom:1px solid #e5e5e5;padding:4px 0;outline:none;color:#1a1a1a;background:transparent}
+.search-wrap input::placeholder{color:#767676}
+.search-wrap input:focus{border-color:#000}
+.sidebar-clear{padding:.5rem 1.25rem;border-bottom:1px solid #e5e5e5}
+.sidebar-clear button{font-family:inherit;font-size:11px;color:#767676;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
+.sidebar-clear button:hover{color:#1a1a1a}
+.filter-group{border-bottom:1px solid #e5e5e5}
+.fg-head{display:flex;justify-content:space-between;align-items:center;padding:.625rem 1.25rem;cursor:pointer;user-select:none}
+.fg-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#1a1a1a;font-weight:500}
+.fg-toggle{font-size:15px;color:#767676;font-weight:300;line-height:1}
+.fg-body{padding:0 1.25rem .625rem;display:none}
+.fg-body.open{display:block}
+.fg-sort-sel{width:100%;font-family:inherit;font-size:12px;color:#1a1a1a;border:none;border-bottom:1px solid #e5e5e5;padding:4px 0;outline:none;background:transparent;cursor:pointer;-webkit-appearance:none;appearance:none}
+.fo-btn{display:block;width:100%;text-align:left;font-family:inherit;font-size:12px;color:#767676;background:none;border:none;padding:3px 0;cursor:pointer;line-height:1.7}
+.fo-btn:hover{color:#1a1a1a}
+.fo-btn.active{color:#000;font-weight:500}
+.formality-wrap{padding:2px 0 4px}
+.formality-range-labels{display:flex;justify-content:space-between;font-size:11px;color:#767676;margin-bottom:6px}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:1px;background:#e5e5e5;border-radius:0;outline:none;cursor:pointer;display:block;margin:7px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:#000;cursor:pointer;border:none}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#000;cursor:pointer;border:none}
+.main-content{flex:1;min-width:0;padding:2rem}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2rem 1.5rem}
+.card{cursor:pointer}
+.card-img{aspect-ratio:3/4;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:.75rem}
+.card-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease}
+.card:hover .card-img img{transform:scale(1.04)}
+.card-info{padding:0}
+.card-brand{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#1a1a1a;margin-bottom:3px;font-weight:500}
+.card-name{font-size:13px;color:#1a1a1a;line-height:1.4;margin-bottom:2px}
+.card-cat{font-size:11px;color:#767676}
+.card-badges{margin-top:4px}
+.badge{font-size:11px;color:#767676}
+.badge-vintage{color:#1a1a1a;font-style:italic}
+.empty{padding:4rem;text-align:center;font-size:13px;color:#767676;grid-column:1/-1}
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:200}
 .drawer-overlay.open{display:block}
-.drawer{position:fixed;right:0;top:0;bottom:0;width:min(480px,100vw);background:var(--paper);border-left:1px solid var(--rule);z-index:201;overflow-y:auto;transform:translateX(100%);transition:transform .25s ease}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:min(500px,100vw);background:#fff;border-left:1px solid #e5e5e5;z-index:201;overflow-y:auto;transform:translateX(100%);transition:transform .3s ease}
 .drawer.open{transform:none}
-.drawer-header{padding:1.125rem 1.375rem .875rem;border-bottom:1px solid var(--rule);display:flex;align-items:flex-start;gap:12px;position:sticky;top:0;background:var(--paper);z-index:10}
-.drawer-img{width:70px;height:90px;border-radius:var(--radius);overflow:hidden;flex-shrink:0;background:var(--paper-3);display:flex;align-items:center;justify-content:center;font-size:1.5rem}
-.drawer-img img{width:100%;height:100%;object-fit:cover}
-.drawer-titles{flex:1;min-width:0}
-.drawer-brand{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
-.drawer-name{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;line-height:1.2;margin-bottom:4px}
-.drawer-cat{font-size:10px;color:var(--ink-3)}
-.drawer-close{background:none;border:none;font-size:22px;color:var(--ink-3);cursor:pointer;padding:2px 4px;flex-shrink:0}
-.drawer-close:hover{color:var(--ink)}
-.drawer-body{padding:1rem 1.375rem}
-.dsec{margin-bottom:1.25rem}
-.dsh{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:.5rem;padding-bottom:.25rem;border-bottom:1px solid var(--rule)}
-.drow{display:flex;gap:.5rem;margin-bottom:.25rem;font-size:11px}
-.dlbl{color:var(--ink-3);min-width:110px;flex-shrink:0}
-.dval{color:var(--ink-2);line-height:1.5}
-.dpill-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
-.dpill{font-size:9px;padding:2px 8px;border:1px solid var(--rule);border-radius:20px;color:var(--ink-3)}
-.edit-link{display:inline-flex;align-items:center;gap:5px;margin-top:1rem;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border:1px solid var(--rule);border-radius:var(--radius);color:var(--ink-3);text-decoration:none;transition:all .15s}
-.edit-link:hover{background:var(--paper-3);color:var(--ink);border-color:var(--ink-3)}
+.drawer-header{padding:1.5rem;border-bottom:1px solid #e5e5e5;display:flex;align-items:flex-start;gap:1rem;position:sticky;top:0;background:#fff;z-index:10}
+.drawer-img{width:80px;height:104px;overflow:hidden;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;font-size:1.5rem}
+.drawer-img img{width:100%;height:100%;object-fit:cover;display:block}
+.drawer-titles{flex:1;min-width:0;padding-top:2px}
+.drawer-brand{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#767676;margin-bottom:5px;font-weight:500}
+.drawer-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;line-height:1.2;margin-bottom:4px;color:#000}
+.drawer-cat{font-size:12px;color:#767676}
+.drawer-close{background:none;border:none;font-size:22px;color:#767676;cursor:pointer;padding:0;flex-shrink:0;line-height:1;transition:color .12s}
+.drawer-close:hover{color:#000}
+.drawer-body{padding:1.5rem}
+.dsec{margin-bottom:1.5rem}
+.dsh{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#767676;margin-bottom:.625rem;padding-bottom:.5rem;border-bottom:1px solid #e5e5e5;font-weight:500}
+.drow{display:flex;gap:1rem;margin-bottom:.375rem;font-size:12px}
+.dlbl{color:#767676;min-width:120px;flex-shrink:0}
+.dval{color:#1a1a1a;line-height:1.5}
+.dpill-wrap{display:flex;flex-wrap:wrap;gap:0;margin-top:4px}
+.dpill{font-size:11px;color:#767676}
+.dpill:not(:last-child)::after{content:', \u00a0'}
+.edit-link{display:inline-block;margin-top:1.25rem;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#000;border-bottom:1px solid #000;padding-bottom:1px;transition:opacity .15s}
+.edit-link:hover{opacity:.5}
 </style>
 </head>
 <body>
 <header>
-  <div><div class="header-title">Closet</div><div class="header-sub">Gallery</div></div>
-  <span class="header-count" id="gal-count" style="margin-left:auto"></span>
-  <a class="add-btn" href="closet-manager.html">+ Add item</a>
-</header>
-<div class="search-bar"><input id="gal-search" placeholder="Search name, brand, category, tag…" oninput="filterGallery()"/></div>
-<div class="filter-panel">
-  <div class="fp-row">
-    <span class="fp-lbl">Sort</span>
-    <select class="fp-sort" id="gal-sort" onchange="filterGallery()">
-      <option value="date-desc">Date added — newest</option>
-      <option value="date-asc">Date added — oldest</option>
-      <option value="brand-asc">Brand A → Z</option>
-      <option value="brand-desc">Brand Z → A</option>
-      <option value="form-asc">Formality — low → high</option>
-      <option value="form-desc">Formality — high → low</option>
-    </select>
-    <button class="fp-clear" onclick="clearFilters()">Clear filters</button>
-  </div>
-  <div class="fp-row">
-    <span class="fp-lbl">Dept</span>
-    <div class="fp-chips" id="fp-dept"></div>
-  </div>
-  <div class="fp-row" id="fp-row-subcat" style="display:none">
-    <span class="fp-lbl">Category</span>
-    <div class="fp-chips" id="fp-subcat"></div>
-  </div>
-  <div class="fp-row">
-    <span class="fp-lbl">Season</span>
-    <div class="fp-chips" id="fp-season"></div>
-  </div>
-  <div class="fp-row">
-    <span class="fp-lbl">Brand</span>
-    <div class="fp-chips" id="fp-brand"></div>
-  </div>
-  <div class="fp-row">
-    <span class="fp-lbl">Weight</span>
-    <div class="fp-chips" id="fp-weight"></div>
-  </div>
-  <div class="fp-row">
-    <span class="fp-lbl">Formality</span>
-    <div class="fp-form-row">
-      <span class="fp-form-val" id="fp-form-lo-val">1</span>
-      <input type="range" id="fp-form-lo" min="1" max="10" value="1" oninput="onFormalityChange()">
-      <span style="font-size:9px;color:var(--ink-3)">–</span>
-      <input type="range" id="fp-form-hi" min="1" max="10" value="10" oninput="onFormalityChange()">
-      <span class="fp-form-val" id="fp-form-hi-val">10</span>
+  <div class="header-inner">
+    <div class="wordmark">My Closet</div>
+    <div class="header-right">
+      <span class="gal-count-lbl" id="gal-count"></span>
+      <a class="add-item-link" href="closet-manager.html">+ Add Item</a>
     </div>
   </div>
-  <div class="fp-row" id="fp-row-occ" style="display:none">
-    <span class="fp-lbl">Occasion</span>
-    <div class="fp-chips" id="fp-occ"></div>
-  </div>
+</header>
+<div class="page-body">
+  <aside class="sidebar">
+    <div class="search-wrap">
+      <input id="gal-search" type="search" placeholder="Search\u2026" oninput="filterGallery()"/>
+    </div>
+    <div class="sidebar-clear">
+      <button onclick="clearFilters()">Clear all</button>
+    </div>
+    <div class="filter-group">
+      <div class="fg-head" onclick="toggleFG(this)"><span class="fg-label">Sort</span><span class="fg-toggle">\u2212</span></div>
+      <div class="fg-body open">
+        <select class="fg-sort-sel" id="gal-sort" onchange="filterGallery()">
+          <option value="date-desc">Date added \u2014 newest</option>
+          <option value="date-asc">Date added \u2014 oldest</option>
+          <option value="brand-asc">Brand A \u2192 Z</option>
+          <option value="brand-desc">Brand Z \u2192 A</option>
+          <option value="form-asc">Formality \u2014 low \u2192 high</option>
+          <option value="form-desc">Formality \u2014 high \u2192 low</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-group">
+      <div class="fg-head" onclick="toggleFG(this)"><span class="fg-label">Department</span><span class="fg-toggle">\u2212</span></div>
+      <div class="fg-body open" id="fp-dept"></div>
+    </div>
+    <div class="filter-group" id="fp-row-subcat" style="display:none">
+      <div class="fg-head" onclick="toggleFG(this)"><span class="fg-label">Category</span><span class="fg-toggle">\u2212</span></div>
+      <div class="fg-body open" id="fp-subcat"></div>
+    </div>
+    <div class="filter-group">
+      <div class="fg-head" onclick="toggleFG(this)"><span class="fg-label">Season</span><span class="fg-toggle">\u2212</span></div>
+      <div class="fg-body open" id="fp-season"></div>
+    </div>
+    <div class="filter-group">
+      <div class="fg-head" onclick="toggleFG(this)"><span class="fg-label">Brand</span><span class="fg-toggle">\u2212</span></div>
+      <div class="fg-body open" id="fp-brand"></div>
+    </div>
+    <div class="filter-group">
+      <div class="fg-head" onclick="toggleFG(this)"><span class="fg-label">Weight</span><span class="fg-toggle">\u2212</span></div>
+      <div class="fg-body open" id="fp-weight"></div>
+    </div>
+    <div class="filter-group">
+      <div class="fg-head" onclick="toggleFG(this)"><span class="fg-label">Formality</span><span class="fg-toggle">\u2212</span></div>
+      <div class="fg-body open">
+        <div class="formality-wrap">
+          <div class="formality-range-labels">
+            <span id="fp-form-lo-val">1</span>
+            <span id="fp-form-hi-val">10</span>
+          </div>
+          <input type="range" id="fp-form-lo" min="1" max="10" value="1" oninput="onFormalityChange()">
+          <input type="range" id="fp-form-hi" min="1" max="10" value="10" oninput="onFormalityChange()">
+        </div>
+      </div>
+    </div>
+    <div class="filter-group" id="fp-row-occ" style="display:none">
+      <div class="fg-head" onclick="toggleFG(this)"><span class="fg-label">Occasion</span><span class="fg-toggle">\u2212</span></div>
+      <div class="fg-body open" id="fp-occ"></div>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="gallery" id="gallery"></div>
+  </main>
 </div>
-<div class="gallery" id="gallery"></div>
 <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-header">
@@ -806,18 +828,18 @@ header{border-bottom:1px solid var(--rule);padding:1.125rem 2rem;display:flex;al
       <div class="drawer-name" id="d-name"></div>
       <div class="drawer-cat" id="d-cat"></div>
     </div>
-    <button class="drawer-close" onclick="closeDrawer()">×</button>
+    <button class="drawer-close" onclick="closeDrawer()">&times;</button>
   </div>
   <div class="drawer-body" id="d-body"></div>
 </div>
 <script>
 const allItems=${itemsJSON};
 const itemsMap=Object.fromEntries(allItems.map(i=>[i.id,i]));
-const EMOJI={'Clothing':'🧺','Shoes':'👟','Bags':'👜','Accessories':'💍','Jewelry':'💎','Activewear':'🏃','Swimwear':'🌊','Lingerie & Loungewear':'🌙'};
+const EMOJI={'Clothing':'\u{1F9FA}','Shoes':'\u{1F45F}','Bags':'\u{1F45C}','Accessories':'\u{1F48D}','Jewelry':'\u{1F48E}','Activewear':'\u{1F3C3}','Swimwear':'\u{1F30A}','Lingerie & Loungewear':'\u{1F319}'};
 const FL={1:'Loungewear',2:'Casual',3:'Weekend casual',4:'Smart casual',5:'Smart casual (elevated)',6:'Business casual',7:'Business formal',8:'Cocktail / Evening',9:'Formal / Gala',10:'Black tie'};
 let filters={dept:'All',subcats:[],seasons:[],brands:[],weights:[],occasions:[],formalityMin:1,formalityMax:10};
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function makeChip(label,active,onclick){const b=document.createElement('button');b.className='fp-chip'+(active?' active':'');b.textContent=label;b.onclick=onclick;return b;}
+function makeChip(label,active,onclick){const b=document.createElement('button');b.className='fo-btn'+(active?' active':'');b.textContent=label;b.onclick=onclick;return b;}
 function renderSingleChips(wid,values,getCurrent,onSelect){
   const w=document.getElementById(wid);if(!w)return;w.innerHTML='';
   values.forEach(v=>w.appendChild(makeChip(v,getCurrent()===v,()=>{onSelect(v);filterGallery();})));
@@ -840,7 +862,7 @@ function updateSubcatChips(){
       const i=filters.subcats.indexOf(c);if(i===-1)filters.subcats.push(c);else filters.subcats.splice(i,1);
       updateSubcatChips();filterGallery();
     })));
-    if(row)row.style.display='flex';
+    if(row)row.style.display='block';
   }else{if(row)row.style.display='none';}
 }
 function onFormalityChange(){
@@ -890,10 +912,11 @@ function filterGallery(){
   filtered.forEach(function(item){
     const el=document.createElement('div');el.className='card';el.setAttribute('data-id',item.id);el.onclick=function(){openDrawer(item.id);};
     const dept=item.category.department||'';
-    el.innerHTML='<div class="card-img">'+(item.image&&item.image.filename?'<img src="'+esc(item.image.filename)+'" alt="'+esc(item.identity.name)+'" loading="lazy" onerror="this.parentNode.innerHTML=\\''+esc(EMOJI[dept]||'🧺')+'\\'"/>':'<span>'+esc(EMOJI[dept]||'🧺')+'</span>')+'</div><div class="card-info"><div class="card-brand">'+esc(item.identity.brand||'')+'</div><div class="card-name">'+esc(item.identity.name)+'</div><div class="card-cat">'+esc([item.category.category,item.category.subcategory].filter(Boolean).join(' \u203a '))+'</div><div class="card-badges">'+(item.identity.vintage&&item.identity.vintage.is_vintage?'<span class="badge badge-vintage">Vintage</span>':'')+'</div></div>';
+    el.innerHTML='<div class="card-img">'+(item.image&&item.image.filename?'<img src="'+esc(item.image.filename)+'" alt="'+esc(item.identity.name)+'" loading="lazy" onerror="this.parentNode.innerHTML=\\''+esc(EMOJI[dept]||'\u{1F9FA}')+'\\'"/>':'<span>'+esc(EMOJI[dept]||'\u{1F9FA}')+'</span>')+'</div><div class="card-info"><div class="card-brand">'+esc(item.identity.brand||'')+'</div><div class="card-name">'+esc(item.identity.name)+'</div><div class="card-cat">'+esc([item.category.category,item.category.subcategory].filter(Boolean).join(' \u203a '))+'</div><div class="card-badges">'+(item.identity.vintage&&item.identity.vintage.is_vintage?'<span class="badge badge-vintage">Vintage</span>':'')+'</div></div>';
     gal.appendChild(el);
   });
 }
+function toggleFG(head){var body=head.nextElementSibling;var toggle=head.querySelector('.fg-toggle');var isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);toggle.textContent=isOpen?'+':'\u2212';}
 function initFilters(){
   renderSingleChips('fp-dept',['All'].concat([...new Set(allItems.map(function(i){return i.category.department;}).filter(Boolean))]),function(){return filters.dept;},function(v){filters.dept=v;filters.subcats=[];updateSubcatChips();});
   updateSubcatChips();
@@ -901,37 +924,38 @@ function initFilters(){
   renderMultiChips('fp-brand',[...new Set(allItems.map(function(i){return i.identity.brand;}).filter(Boolean))].sort(),'brands');
   renderMultiChips('fp-weight',['Sheer','Lightweight','Medium','Medium-heavy','Heavy'],'weights');
   var occs=[...new Set(allItems.reduce(function(a,i){return a.concat(i.wearing_profile.occasions||[]);},[])).values()].filter(Boolean).sort();
-  if(occs.length){renderMultiChips('fp-occ',occs,'occasions');var r=document.getElementById('fp-row-occ');if(r)r.style.display='flex';}
+  if(occs.length){renderMultiChips('fp-occ',occs,'occasions');var r=document.getElementById('fp-row-occ');if(r)r.style.display='block';}
 }
 function openDrawer(id){
   const item=itemsMap[id];if(!item)return;
   const dept=item.category.department||'';
   const imgEl=document.getElementById('d-img');
-  imgEl.innerHTML=item.image&&item.image.filename?'<img src="'+esc(item.image.filename)+'" alt="'+esc(item.identity.name)+'" onerror="this.parentNode.innerHTML=\\''+esc(EMOJI[dept]||'🧺')+'\\'"/>':'<span>'+esc(EMOJI[dept]||'🧺')+'</span>';
+  imgEl.innerHTML=item.image&&item.image.filename?'<img src="'+esc(item.image.filename)+'" alt="'+esc(item.identity.name)+'" onerror="this.parentNode.innerHTML=\\''+esc(EMOJI[dept]||'\u{1F9FA}')+'\\'"/>':'<span>'+esc(EMOJI[dept]||'\u{1F9FA}')+'</span>';
   document.getElementById('d-brand').textContent=item.identity.brand||'';
   document.getElementById('d-name').textContent=item.identity.name;
-  document.getElementById('d-cat').textContent=[item.category.department,item.category.category,item.category.subcategory].filter(Boolean).join(' › ');
+  document.getElementById('d-cat').textContent=[item.category.department,item.category.category,item.category.subcategory].filter(Boolean).join(' \u203a ');
   const body=document.getElementById('d-body');let h='';
   function row(l,v){return v?'<div class="drow"><span class="dlbl">'+l+'</span><span class="dval">'+esc(String(v))+'</span></div>':'';}
   h+='<div class="dsec"><div class="dsh">Identity</div>';
-  if(item.identity.vintage&&item.identity.vintage.is_vintage)h+='<div class="drow"><span class="dlbl">Vintage</span><span class="dval">Yes'+(item.identity.vintage.era?' — '+esc(item.identity.vintage.era):'')+'</span></div>';
+  if(item.identity.vintage&&item.identity.vintage.is_vintage)h+='<div class="drow"><span class="dlbl">Vintage</span><span class="dval">Yes'+(item.identity.vintage.era?' \u2014 '+esc(item.identity.vintage.era):'')+'</span></div>';
   h+=row('Colorway',item.identity.colorway_name)+row('SKU',item.identity.sku)+row('Collection',item.identity.collection_season)+row('Year acquired',item.identity.year_acquired)+'</div>';
   h+='<div class="dsec"><div class="dsh">Visual</div>'+row('Colors',[item.visual.colors&&item.visual.colors.primary,item.visual.colors&&item.visual.colors.secondary,item.visual.colors&&item.visual.colors.tertiary].filter(Boolean).join(', '))+row('Pattern',item.visual.pattern)+row('Print',item.visual.print_description)+row('Silhouette',item.visual.silhouette)+row('Length',item.visual.length)+row('Sleeve',item.visual.sleeve_length)+'</div>';
-  if(item.construction.fabric&&item.construction.fabric.length){h+='<div class="dsec"><div class="dsh">Construction</div>';h+=row('Fabric',item.construction.fabric.map(f=>f.material+(f.percentage?' '+f.percentage+'%':'')).join(', '));h+=row('Weight',item.construction.weight)+row('Structure',item.construction.structure)+row('Seasons',(item.construction.seasons||[]).join(', '))+row('Care',item.construction.care)+row('Origin',item.construction.country_of_origin)+'</div>';}
-  if(item.wearing_profile){const fp=item.wearing_profile.formality;h+='<div class="dsec"><div class="dsh">Wearing profile</div>';if(fp)h+=row('Formality',FL[fp.min]+' → '+FL[fp.max]);h+=row('Style notes',item.wearing_profile.style_notes);if((item.wearing_profile.occasions||[]).length)h+='<div class="drow"><span class="dlbl">Occasions</span><div class="dpill-wrap">'+item.wearing_profile.occasions.map(o=>'<span class="dpill">'+esc(o)+'</span>').join('')+'</div></div>';if((item.wearing_profile.feels||[]).length)h+='<div class="drow"><span class="dlbl">Feels</span><div class="dpill-wrap">'+item.wearing_profile.feels.map(f=>'<span class="dpill">'+esc(f)+'</span>').join('')+'</div></div>';h+='</div>';}
+  if(item.construction.fabric&&item.construction.fabric.length){h+='<div class="dsec"><div class="dsh">Construction</div>';h+=row('Fabric',item.construction.fabric.map(function(f){return f.material+(f.percentage?' '+f.percentage+'%':'');}).join(', '));h+=row('Weight',item.construction.weight)+row('Structure',item.construction.structure)+row('Seasons',(item.construction.seasons||[]).join(', '))+row('Care',item.construction.care)+row('Origin',item.construction.country_of_origin)+'</div>';}
+  if(item.wearing_profile){const fp=item.wearing_profile.formality;h+='<div class="dsec"><div class="dsh">Wearing profile</div>';if(fp)h+=row('Formality',FL[fp.min]+' \u2192 '+FL[fp.max]);h+=row('Style notes',item.wearing_profile.style_notes);if((item.wearing_profile.occasions||[]).length)h+='<div class="drow"><span class="dlbl">Occasions</span><div class="dpill-wrap">'+item.wearing_profile.occasions.map(function(o){return'<span class="dpill">'+esc(o)+'</span>';}).join('')+'</div></div>';if((item.wearing_profile.feels||[]).length)h+='<div class="drow"><span class="dlbl">Feels</span><div class="dpill-wrap">'+item.wearing_profile.feels.map(function(f){return'<span class="dpill">'+esc(f)+'</span>';}).join('')+'</div></div>';h+='</div>';}
   if(item.provenance){h+='<div class="dsec"><div class="dsh">Provenance</div>'+row('Retailer',item.provenance.retailer)+row('Acquired',item.provenance.acquisition_type)+(item.provenance.purchase_price&&item.provenance.purchase_price.amount?row('Price','$'+item.provenance.purchase_price.amount):'')+row('Condition',item.provenance.current_condition)+row('Storage',item.provenance.storage_location)+'</div>';}
-  if(item.meta&&item.meta.claude_context)h+='<div class="dsec"><div class="dsh">Notes for Claude</div><div style="font-size:11px;color:var(--ink-2);line-height:1.6;padding:6px 9px;background:var(--paper-2);border-radius:var(--radius);border-left:2px solid var(--ink-3)">'+esc(item.meta.claude_context)+'</div></div>';
-  h+='<a class="edit-link" href="closet-manager.html">Edit in Manager ↗</a>';
+  if(item.meta&&item.meta.claude_context)h+='<div class="dsec"><div class="dsh">Notes for Claude</div><div style="font-size:12px;color:#1a1a1a;line-height:1.6;padding:6px 9px;background:#f5f5f5;border-left:2px solid #e5e5e5">'+esc(item.meta.claude_context)+'</div></div>';
+  h+='<a class="edit-link" href="closet-manager.html">Edit in Manager \u2197</a>';
   body.innerHTML=h;
   document.getElementById('drawer-overlay').classList.add('open');document.getElementById('drawer').classList.add('open');
   document.body.style.overflow='hidden';
 }
 function closeDrawer(){document.getElementById('drawer-overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');document.body.style.overflow='';}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeDrawer();});
 initFilters();filterGallery();
 <\/script>
 </body>
 </html>`;
+}
 }
 async function buildAndPushIndex(){
   try{await ghPush('index.html',buildIndexHTML());}
