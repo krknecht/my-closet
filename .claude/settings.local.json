@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python3:*)",
-      "WebFetch(domain:www.net-a-porter.com)"
+      "WebFetch(domain:www.net-a-porter.com)",
+      "Bash(grep -n \"^function\\\\|^async function\\\\|const html = \\\\`\" /Users/kateclick1/Style/item-card-generator-v3.html)"
     ]
   }
 }

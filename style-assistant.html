@@ -4,9 +4,23 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Closet — Style Assistant</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+@font-face {
+  font-family: 'Vend Sans';
+  src: url('/VendSans-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vend Sans';
+  src: url('/VendSans-Italic-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+
 :root {
   --ink: #1c1917;
   --ink-2: #57534e;
@@ -33,7 +47,7 @@
 html, body { height: 100%; }
 
 body {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   background: var(--paper);
   color: var(--ink);
   display: flex;
@@ -67,27 +81,27 @@ body::after {
 /* ── Header ── */
 header {
   flex-shrink: 0;
-  border-bottom: 1px solid var(--rule);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
   padding: 1.5rem 2rem;
   display: flex;
   align-items: baseline;
   gap: 1.5rem;
-  background: var(--paper);
+  background: #000;
   z-index: 50;
 }
 
 .header-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 22px;
   font-weight: 300;
   letter-spacing: 0.04em;
-  color: var(--ink);
+  color: #fff;
   text-decoration: none;
 }
 
 .header-subtitle {
   font-size: 10px;
-  color: var(--ink-3);
+  color: rgba(255,255,255,0.5);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -96,7 +110,7 @@ header {
   margin-left: auto;
   display: flex;
   gap: 0;
-  border: 1px solid var(--rule);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: var(--radius);
   overflow: hidden;
 }
@@ -104,12 +118,12 @@ header {
 .nav-tab {
   padding: 6px 16px;
   font-size: 10px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   border: none;
   background: transparent;
-  color: var(--ink-3);
+  color: rgba(255,255,255,0.6);
   cursor: pointer;
   transition: all 0.15s;
   text-decoration: none;
@@ -117,20 +131,20 @@ header {
   align-items: center;
 }
 
-.nav-tab:not(:last-child) { border-right: 1px solid var(--rule); }
-.nav-tab.active { background: var(--ink); color: var(--paper); }
-.nav-tab:not(.active):hover { background: var(--paper-3); color: var(--ink); }
+.nav-tab:not(:last-child) { border-right: 1px solid rgba(255,255,255,0.2); }
+.nav-tab.active { background: #fff; color: #000; }
+.nav-tab:not(.active):hover { background: rgba(255,255,255,0.1); color: #fff; }
 
 .settings-btn {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 6px 14px;
-  border: 1px solid var(--rule);
+  border: 1px solid rgba(255,255,255,0.3);
   border-radius: var(--radius);
   background: transparent;
-  color: var(--ink-3);
+  color: rgba(255,255,255,0.6);
   cursor: pointer;
   transition: all 0.15s;
   display: flex;
@@ -139,7 +153,7 @@ header {
   margin-left: 12px;
 }
 
-.settings-btn:hover { background: var(--paper-3); color: var(--ink); border-color: var(--ink-3); }
+.settings-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.5); }
 .settings-btn.configured { color: var(--accent-mid); border-color: var(--accent-mid); background: var(--accent-light); }
 
 .settings-dot {
@@ -185,7 +199,7 @@ header {
 .status-text { color: var(--ink-2); }
 
 .status-retry {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -230,7 +244,7 @@ header {
 }
 
 .welcome-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 34px;
   font-weight: 300;
   letter-spacing: 0.03em;
@@ -256,7 +270,7 @@ header {
 }
 
 .example-chip {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 10px;
   letter-spacing: 0.06em;
   padding: 8px 16px;
@@ -338,7 +352,7 @@ header {
 
 /* ── Markdown inside assistant messages ── */
 .message-body h2 {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 20px;
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -346,7 +360,7 @@ header {
   margin: 1.25rem 0 0.5rem;
 }
 .message-body h3 {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 17px;
   font-weight: 400;
   color: var(--ink);
@@ -375,7 +389,7 @@ header {
 .message-body em { font-style: italic; color: var(--ink-2); }
 
 .message-body code {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 11px;
   background: var(--paper-3);
   padding: 1px 5px;
@@ -467,7 +481,7 @@ header {
 
 textarea#chat-input {
   flex: 1;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 13px;
   padding: 10px 14px;
   border: 1px solid var(--rule);
@@ -489,7 +503,7 @@ textarea#chat-input:focus {
 textarea#chat-input::placeholder { color: var(--ink-3); }
 
 .send-btn {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -590,7 +604,7 @@ textarea#chat-input::placeholder { color: var(--ink-3); }
 .m-field input {
   width: 100%;
   font-size: 13px;
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   padding: 8px 10px;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
@@ -621,7 +635,7 @@ textarea#chat-input::placeholder { color: var(--ink-3); }
 }
 
 .btn {
-  font-family: 'DM Mono', monospace;
+  font-family: 'Vend Sans', sans-serif;
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
