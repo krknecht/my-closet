@@ -753,6 +753,7 @@ const WORKER_URL  = 'https://closet-proxy.doesthislookright.workers.dev';
 const CLOSET_URL  = 'https://my-closet.pages.dev/closet.json';
 const MODEL       = 'claude-sonnet-4-20250514';
 const MAX_TOKENS  = 4096;
+const ANTHROPIC_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let closetItems   = [];
@@ -852,10 +853,23 @@ async function fetchOneImage(item) {
     const r = await fetch(WORKER_URL + '/proxy/image?url=' + encodeURIComponent(url), {
       headers: { 'X-Closet-Passphrase': getPass() }
     });
-    if (!r.ok) return;
+    if (!r.ok) {
+      console.log('[image skip]', item.name, '— worker error', r.status, url);
+      return;
+    }
     const j = await r.json();
-    if (j.content) imageCache.set(item.id, { data: j.content, mimeType: j.mimeType });
-  } catch { /* skip */ }
+    if (!j.content) {
+      console.log('[image skip]', item.name, '— no content in response', url);
+      return;
+    }
+    if (!ANTHROPIC_IMAGE_TYPES.has(j.mimeType)) {
+      console.log('[image skip]', item.name, '— unsupported type:', j.mimeType, url);
+      return;
+    }
+    imageCache.set(item.id, { data: j.content, mimeType: j.mimeType });
+  } catch (e) {
+    console.log('[image skip]', item.name, '— fetch error:', e.message, url);
+  }
 }
 async function fetchAllImages() {
   setStatus('loading', 'Fetching item photos\u2026');
