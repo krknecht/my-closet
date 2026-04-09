@@ -17,8 +17,8 @@
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, PUT, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Closet-Passphrase',
+  'Access-Control-Allow-Methods': 'GET, PUT, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Closet-Passphrase, x-api-key',
 };
 
 export default {
@@ -36,6 +36,10 @@ export default {
 
     if (url.pathname === '/proxy/image') {
       return handleImage(request, env, url.searchParams.get('url'));
+    }
+
+    if (url.pathname === '/proxy/anthropic') {
+      return handleAnthropic(request, env);
     }
 
     return jsonResponse({ error: 'Not found' }, 404);
@@ -112,6 +116,37 @@ async function handleImage(request, env, imageUrl) {
   const buffer = await res.arrayBuffer();
   const content = arrayBufferToBase64(buffer);
   return jsonResponse({ content, mimeType });
+}
+
+// ─── Anthropic proxy ──────────────────────────────────────────────────────────
+
+async function handleAnthropic(request, env) {
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
+  if (!isAuthed(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const apiKey = request.headers.get('x-api-key');
+  if (!apiKey) return jsonResponse({ error: 'Missing x-api-key header' }, 400);
+
+  let body;
+  try { body = await request.json(); }
+  catch { return jsonResponse({ error: 'Invalid JSON body' }, 400); }
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify(body),
+  });
+
+  // Stream response back with CORS headers
+  const headers = {
+    'Content-Type': res.headers.get('Content-Type') || 'text/event-stream',
+    ...CORS,
+  };
+  return new Response(res.body, { status: res.status, headers });
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
