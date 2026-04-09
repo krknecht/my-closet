@@ -742,28 +742,43 @@ const MAX_TOKENS  = 4096;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let closetItems   = [];
-let imageCache    = new Map(); // item.id → { data: base64, mimeType }
-let conversation  = [];        // Anthropic messages array
-let imagesLoaded  = false;     // true after first image fetch
+let imageCache    = new Map();   // item.id → { data: base64, mimeType }
+let conversation  = [];          // Anthropic messages array
+let imagesLoaded  = false;
 let isStreaming   = false;
+
+// interview / profile flags
+let interviewMode = false;       // true while conducting style interview
+let interviewStep = 1;           // estimated topic progress 1–12
+let styleProfile  = null;        // parsed style-profile object
+let refineMode    = false;       // true during targeted profile edit
 
 // ─── Credentials ─────────────────────────────────────────────────────────────
 const getApiKey    = () => localStorage.getItem('anthropic_key') || '';
 const getPass      = () => localStorage.getItem('worker_passphrase') || '';
 const isConfigured = () => !!(getApiKey() && getPass());
 
+// ─── Profile storage ──────────────────────────────────────────────────────────
+function loadStoredProfile() {
+  try { return JSON.parse(localStorage.getItem('style_profile') || 'null'); }
+  catch { return null; }
+}
+function saveStoredProfile(profile) {
+  profile.updated_at = new Date().toISOString();
+  localStorage.setItem('style_profile', JSON.stringify(profile));
+  styleProfile = profile;
+}
+
 // ─── Settings modal ───────────────────────────────────────────────────────────
 function openSettings() {
-  document.getElementById('inp-apikey').value    = getApiKey();
+  document.getElementById('inp-apikey').value     = getApiKey();
   document.getElementById('inp-passphrase').value = getPass();
   document.getElementById('settings-modal').classList.add('open');
   document.getElementById('inp-apikey').focus();
 }
-
 function closeSettings() {
   document.getElementById('settings-modal').classList.remove('open');
 }
-
 function saveSettings() {
   const key  = document.getElementById('inp-apikey').value.trim();
   const pass = document.getElementById('inp-passphrase').value.trim();
@@ -772,7 +787,6 @@ function saveSettings() {
   updateSettingsBtn();
   closeSettings();
 }
-
 function clearSettings() {
   localStorage.removeItem('anthropic_key');
   localStorage.removeItem('worker_passphrase');
@@ -780,46 +794,46 @@ function clearSettings() {
   document.getElementById('inp-passphrase').value = '';
   updateSettingsBtn();
 }
-
 function updateSettingsBtn() {
   const btn   = document.getElementById('settings-btn');
   const label = document.getElementById('settings-label');
-  if (isConfigured()) {
-    btn.classList.add('configured');
-    label.textContent = 'Connected';
-  } else {
-    btn.classList.remove('configured');
-    label.textContent = 'Settings';
-  }
+  if (isConfigured()) { btn.classList.add('configured'); label.textContent = 'Connected'; }
+  else                { btn.classList.remove('configured'); label.textContent = 'Settings'; }
 }
 
 // ─── Status bar ───────────────────────────────────────────────────────────────
 function setStatus(state, text) {
-  document.getElementById('status-dot').className   = 'status-dot' + (state ? ' ' + state : '');
+  document.getElementById('status-dot').className    = 'status-dot' + (state ? ' ' + state : '');
   document.getElementById('status-text').textContent = text;
   document.getElementById('status-retry').classList.toggle('show', state === 'error');
+}
+function setInterviewProgress(step) {
+  const total = 12;
+  const n = Math.min(step, total);
+  document.getElementById('status-dot').className    = 'status-dot loading';
+  document.getElementById('status-text').textContent = 'Style interview \u00b7 question ' + n + ' of ' + total;
+  document.getElementById('status-retry').classList.remove('show');
 }
 
 // ─── Closet loading ───────────────────────────────────────────────────────────
 async function loadCloset() {
-  setStatus('loading', 'Loading closet…');
+  setStatus('loading', 'Loading closet\u2026');
   try {
     const res = await fetch(CLOSET_URL);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     closetItems = (data.items || []).filter(i => i.status === 'active' || !i.status);
-    setStatus('ok', closetItems.length + ' items loaded');
+    return true;
   } catch (e) {
-    setStatus('error', 'Failed to load closet — ' + e.message);
+    setStatus('error', 'Failed to load closet \u2014 ' + e.message);
+    return false;
   }
 }
 
 // ─── Image fetching ───────────────────────────────────────────────────────────
 async function fetchOneImage(item) {
   const url = item.image && item.image.public_url;
-  if (!url) return;
-  if (imageCache.has(item.id)) return;
-
+  if (!url || imageCache.has(item.id)) return;
   try {
     const r = await fetch(WORKER_URL + '/proxy/image?url=' + encodeURIComponent(url), {
       headers: { 'X-Closet-Passphrase': getPass() }
@@ -827,82 +841,264 @@ async function fetchOneImage(item) {
     if (!r.ok) return;
     const j = await r.json();
     if (j.content) imageCache.set(item.id, { data: j.content, mimeType: j.mimeType });
-  } catch { /* skip failed image */ }
+  } catch { /* skip */ }
 }
-
 async function fetchAllImages() {
-  setStatus('loading', 'Fetching item photos…');
+  setStatus('loading', 'Fetching item photos\u2026');
   await Promise.allSettled(closetItems.map(fetchOneImage));
-  const n = imageCache.size;
-  const missing = closetItems.length - n;
-  if (missing > 0) {
-    setStatus('ok', closetItems.length + ' items · ' + n + ' photos loaded (' + missing + ' unavailable)');
-  } else {
-    setStatus('ok', closetItems.length + ' items · all photos loaded');
-  }
+  const n = imageCache.size, missing = closetItems.length - n;
+  setStatus('ok', closetItems.length + ' items \u00b7 ' + n + ' photos' + (missing ? ' (' + missing + ' unavailable)' : ' loaded'));
   imagesLoaded = true;
 }
 
-// ─── System prompt ────────────────────────────────────────────────────────────
-function buildSystemPrompt() {
-  const items = closetItems.map(item => ({
-    id:           item.id,
+// ─── System prompts ───────────────────────────────────────────────────────────
+function buildItemsSummary() {
+  return closetItems.map(item => ({
     name:         item.identity.name,
     brand:        item.identity.brand,
     department:   item.category.department,
     category:     item.category.category,
     subcategory:  item.category.subcategory,
-    vintage:      item.identity.vintage,
+    vintage:      item.identity.vintage && item.identity.vintage.is_vintage,
     colors:       item.visual.colors,
     pattern:      item.visual.pattern,
-    print:        item.visual.print_description,
     silhouette:   item.visual.silhouette,
     length:       item.visual.length,
     sleeve:       item.visual.sleeve_length,
-    embellishment: item.visual.embellishment,
-    fabric:       item.construction.fabric,
+    fabric:       item.construction.fabric ? item.construction.fabric.map(f => f.material).join(', ') : null,
     weight:       item.construction.weight,
     structure:    item.construction.structure,
     seasons:      item.construction.seasons,
-    sustainability: item.construction.sustainability,
-    size:         item.fit.size,
-    size_system:  item.fit.size_system,
-    fit_notes:    item.fit.fit_notes,
     formality:    item.wearing_profile.formality,
     occasions:    item.wearing_profile.occasions,
-    feels:        item.wearing_profile.feels,
     style_notes:  item.wearing_profile.style_notes,
     tags:         item.meta.tags,
     claude_context: item.meta.claude_context,
-    rotation:     item.meta && item.meta.rotation,
     has_photo:    imageCache.has(item.id),
   }));
+}
 
-  return `You are a personal style assistant with complete knowledge of the user's wardrobe.
+function formatProfileForPrompt(p) {
+  if (!p) return '';
+  const lines = [];
+  if (p.aesthetic) {
+    if (p.aesthetic.refined_description) lines.push('Aesthetic: ' + p.aesthetic.refined_description);
+    if (p.aesthetic.keywords && p.aesthetic.keywords.length) lines.push('Keywords: ' + p.aesthetic.keywords.join(', '));
+    if (p.aesthetic.style_icons && p.aesthetic.style_icons.length) lines.push('Style icons: ' + p.aesthetic.style_icons.join(', '));
+  }
+  if (p.color) {
+    if (p.color.core_palette && p.color.core_palette.length) lines.push('Core colors: ' + p.color.core_palette.join(', '));
+    if (p.color.avoid_colors && p.color.avoid_colors.length) lines.push('Avoids: ' + p.color.avoid_colors.join(', '));
+    if (p.color.palette_style) lines.push('Palette style: ' + p.color.palette_style);
+    if (p.color.notes) lines.push('Color notes: ' + p.color.notes);
+  }
+  if (p.silhouette) {
+    if (p.silhouette.preferred_proportions) lines.push('Preferred proportions: ' + p.silhouette.preferred_proportions);
+    if (p.silhouette.preferred_fit) lines.push('Preferred fit: ' + p.silhouette.preferred_fit);
+    const details = [];
+    if (p.silhouette.likes_tucking) details.push('tucking');
+    if (p.silhouette.likes_belting) details.push('belting');
+    if (p.silhouette.likes_layering) details.push('layering');
+    if (details.length) lines.push('Styling habits: ' + details.join(', '));
+    if (p.silhouette.notes) lines.push('Silhouette notes: ' + p.silhouette.notes);
+  }
+  if (p.fabric) {
+    if (p.fabric.structure_preference) lines.push('Fabric preference: ' + p.fabric.structure_preference);
+    if (p.fabric.preferred_textures && p.fabric.preferred_textures.length) lines.push('Preferred textures: ' + p.fabric.preferred_textures.join(', '));
+    if (p.fabric.avoided_textures && p.fabric.avoided_textures.length) lines.push('Avoided textures: ' + p.fabric.avoided_textures.join(', '));
+  }
+  if (p.lifestyle) {
+    if (p.lifestyle.formality_comfort) lines.push('Formality comfort: ' + p.lifestyle.formality_comfort + '/10');
+    if (p.lifestyle.tends_to) lines.push('Tends to: ' + p.lifestyle.tends_to);
+    if (p.lifestyle.contexts && p.lifestyle.contexts.length) {
+      lines.push('Lifestyle: ' + p.lifestyle.contexts.map(c => c.name + (c.frequency ? ' (' + c.frequency + ')' : '')).join(', '));
+    }
+    if (p.lifestyle.notes) lines.push('Lifestyle notes: ' + p.lifestyle.notes);
+  }
+  if (p.avoid) {
+    if (p.avoid.never_wear && p.avoid.never_wear.length) lines.push('Never wears: ' + p.avoid.never_wear.join(', '));
+    if (p.avoid.disliked_trends && p.avoid.disliked_trends.length) lines.push('Dislikes: ' + p.avoid.disliked_trends.join(', '));
+    if (p.avoid.uncomfortable_with && p.avoid.uncomfortable_with.length) lines.push('Uncomfortable with: ' + p.avoid.uncomfortable_with.join(', '));
+  }
+  if (p.body_and_fit) {
+    if (p.body_and_fit.fit_dealbreakers && p.body_and_fit.fit_dealbreakers.length) lines.push('Fit dealbreakers: ' + p.body_and_fit.fit_dealbreakers.join(', '));
+    if (p.body_and_fit.highlight && p.body_and_fit.highlight.length) lines.push('Likes to highlight: ' + p.body_and_fit.highlight.join(', '));
+    if (p.body_and_fit.de_emphasize && p.body_and_fit.de_emphasize.length) lines.push('Prefers to cover: ' + p.body_and_fit.de_emphasize.join(', '));
+  }
+  if (p.aspirations) {
+    if (p.aspirations.direction) lines.push('Style direction: ' + p.aspirations.direction);
+    if (p.aspirations.want_more_of && p.aspirations.want_more_of.length) lines.push('Wants more of: ' + p.aspirations.want_more_of.join(', '));
+    if (p.aspirations.wardrobe_gaps && p.aspirations.wardrobe_gaps.length) lines.push('Wardrobe gaps: ' + p.aspirations.wardrobe_gaps.join(', '));
+  }
+  if (p.shopping) {
+    if (p.shopping.drawn_to && p.shopping.drawn_to.length) lines.push('Drawn to: ' + p.shopping.drawn_to.join(', '));
+    if (p.shopping.trusted_brands && p.shopping.trusted_brands.length) lines.push('Trusted brands: ' + p.shopping.trusted_brands.join(', '));
+  }
+  return lines.join('\n');
+}
 
-WARDROBE — ${closetItems.length} items:
+function buildSystemPrompt() {
+  const items = buildItemsSummary();
+  let prompt = 'You are a personal style assistant with complete knowledge of the user\'s wardrobe.';
+
+  if (styleProfile) {
+    prompt += '\n\n## Owner\'s Style Profile\n' + formatProfileForPrompt(styleProfile);
+    prompt += '\n\nReference the style profile naturally in recommendations. Say "given that you prefer tonal dressing..." or "since you avoid anything cropped..." Use it to make advice specific and personal.';
+  }
+
+  prompt += `\n\n## Wardrobe \u2014 ${closetItems.length} items:\n` + JSON.stringify(items, null, 2);
+
+  prompt += '\n\nFORMALITY SCALE: 1=Loungewear, 2=Casual, 3=Weekend casual, 4=Smart casual, 5=Smart casual (elevated), 6=Business casual, 7=Business formal, 8=Cocktail/Evening, 9=Formal/Gala, 10=Black tie. The formality field gives min/max \u2014 the range of contexts an item works for.';
+
+  prompt += '\n\nGUIDELINES:\n\u2014 Always reference specific items by name and brand\n\u2014 Consider color coordination, fabric weight, and seasonal fit\n\u2014 Be opinionated \u2014 make a recommendation, not a list of options\n\u2014 Note vintage items when relevant\n\u2014 Format responses with headers and concise bullets';
+
+  if (imageCache.size > 0) {
+    prompt += '\n\nPhotos of wardrobe items are included in the first message. Items without photos are marked has_photo: false \u2014 work from metadata for those.';
+  }
+  return prompt;
+}
+
+function buildInterviewSystemPrompt() {
+  const items = buildItemsSummary();
+  const wardrobeStr = JSON.stringify(items, null, 2);
+
+  const schema = `{
+  "version": "1.0",
+  "created_at": "ISO date",
+  "updated_at": "ISO date",
+  "aesthetic": {
+    "self_description": "string \u2014 their own words",
+    "refined_description": "string \u2014 your synthesis",
+    "style_icons": ["string"],
+    "keywords": ["string \u2014 e.g. 'minimalist', 'borrowed-from-the-boys', 'quiet luxury'"]
+  },
+  "color": {
+    "core_palette": ["string"],
+    "accent_colors": ["string"],
+    "avoid_colors": ["string"],
+    "neutral_preference": "warm | cool | mixed",
+    "palette_style": "tonal | contrast | monochrome | eclectic",
+    "notes": "string"
+  },
+  "silhouette": {
+    "preferred_proportions": "string",
+    "preferred_fit": "fitted | relaxed | oversized | varies",
+    "preferred_lengths": { "tops": "string", "bottoms": "string", "dresses": "string" },
+    "likes_tucking": false,
+    "likes_belting": false,
+    "likes_layering": false,
+    "notes": "string"
+  },
+  "fabric": {
+    "preferred_textures": ["string"],
+    "avoided_textures": ["string"],
+    "structure_preference": "structured | soft | both",
+    "weight_preference": "light | medium | heavy | varies",
+    "cares_about_material": true,
+    "notes": "string"
+  },
+  "lifestyle": {
+    "contexts": [{ "name": "string", "frequency": "string", "formality": "1-10 range string" }],
+    "formality_comfort": 5,
+    "tends_to": "overdress | underdress | match",
+    "notes": "string"
+  },
+  "avoid": {
+    "never_wear": ["string"],
+    "disliked_trends": ["string"],
+    "uncomfortable_with": ["string"],
+    "notes": "string"
+  },
+  "body_and_fit": {
+    "highlight": ["string"],
+    "de_emphasize": ["string"],
+    "fit_dealbreakers": ["string"],
+    "notes": "string"
+  },
+  "aspirations": {
+    "direction": "string",
+    "want_more_of": ["string"],
+    "wardrobe_gaps": ["string"],
+    "notes": "string"
+  },
+  "shopping": {
+    "drawn_to": ["string"],
+    "puts_back": ["string"],
+    "trusted_brands": ["string"],
+    "notes": "string"
+  }
+}`;
+
+  return `You are a personal style assistant conducting a structured style interview. Build a detailed, accurate style profile through a genuine flowing conversation \u2014 not a questionnaire.
+
+WARDROBE \u2014 ${closetItems.length} items the user owns:
+${wardrobeStr}
+
+FORMALITY SCALE: 1=Loungewear, 2=Casual, 3=Weekend casual, 4=Smart casual, 5=Smart casual (elevated), 6=Business casual, 7=Business formal, 8=Cocktail/Evening, 9=Formal/Gala, 10=Black tie
+
+INTERVIEW STRUCTURE:
+Cover all 12 topics, in order. Ask ONE question per response \u2014 never two at once. After each answer, either ask ONE follow-up (if vague or interesting) or move to the next topic. Reference their actual wardrobe items to make questions concrete.
+
+1. AESTHETIC IDENTITY \u2014 "How would you describe your style in a few words? Not what you think it should be \u2014 what it actually is day to day." If they say something generic like 'casual' or 'classic', push: "Can you be more specific? What does that look like on a regular Tuesday?"
+
+2. STYLE ICONS \u2014 Who do they look at and think 'I want to dress like that'? Can be celebrities, people they know, fictional characters, an era. Probe what specifically they admire \u2014 the silhouette? The attitude? The color palette?
+
+3. COLOR INSTINCTS \u2014 What colors do they reach for without thinking? What do they admire on others but can't make work on themselves? Follow up on neutrals vs. color ratio, tonal vs. contrast dressing.
+
+4. SILHOUETTE & PROPORTION \u2014 When an outfit feels right, what's the shape? Reference their actual items \u2014 for example, note they have both fitted pieces (the Agolde ruched tank) and oversized pieces (the KALLMEYER linen button-down). Do they like playing with that contrast, or tend to go one direction?
+
+5. FABRIC & TEXTURE \u2014 Crisp and structured or soft and drapey? Does wearing cashmere or silk actually change how they feel? Probe sensory preferences. Do they care about material quality?
+
+6. LIFESTYLE \u2014 Walk me through a typical week. What are the different contexts they dress for? Understand the proportion \u2014 how much is work vs. casual vs. going out? This shapes how to weight recommendations.
+
+7. FORMALITY COMFORT ZONE \u2014 On a scale of 'I live in sweats' to 'I'd wear a blazer to the grocery store,' where do they sit? Do they tend to overdress or underdress? Cross-reference: their items span formality 1\u201310, which range do they actually reach for?
+
+8. WHAT THEY AVOID \u2014 What will they absolutely never wear? Trends they hate, shapes that make them uncomfortable, colors that are dead to them. This is often the most revealing section \u2014 push for specifics.
+
+9. SHOPPING INSTINCTS \u2014 When something catches their eye, what is it about the piece? What makes them put something back? Are they drawn to novelty, quality, brand, versatility?
+
+10. GAPS & ASPIRATIONS \u2014 Is there a direction their style is heading that their closet doesn't reflect yet? Something they want to wear more of but haven't committed to? What feels missing?
+
+11. FIT & BODY (OPTIONAL) \u2014 Are there features they like to highlight, or prefer to de-emphasize? Any fit dealbreakers \u2014 like 'nothing cropped' or 'always covers my arms'? Be warm and sensitive here. If they seem reluctant, move on.
+
+12. FINAL SYNTHESIS \u2014 "Okay, here's what I'm hearing\u2026" Summarize the full profile conversationally in a few paragraphs. Call out interesting tensions or contradictions (e.g., "You say you want to be more adventurous but your whole wardrobe is navy, black, and gray \u2014 that gap is worth exploring"). Ask: "Does this feel right? Anything I've missed or gotten wrong?"
+
+BEHAVIORAL RULES:
+\u2014 ONE question per message, never more
+\u2014 Reference actual wardrobe items by name and brand when relevant
+\u2014 If an answer is vague or one word, push once: "Can you say more?" or offer a concrete hook from their closet
+\u2014 Be warm, direct, and opinionated \u2014 like a very knowledgeable friend who happens to know fashion
+\u2014 Never say "Topic 3:" or "Moving to question 5" \u2014 just flow naturally
+\u2014 Do not rush \u2014 if an answer is rich, explore it before moving on
+
+COMPLETION:
+After the user confirms the final synthesis sounds right, output the completed style profile JSON between <style_profile> and </style_profile> tags. Use this exact schema, filling every field you have data for (leave arrays empty [] if truly unknown):
+${schema}
+
+Begin now with your first question.`;
+}
+
+function buildRefineSystemPrompt() {
+  const items = buildItemsSummary();
+  return `You are a personal style assistant helping the user update a section of their existing style profile.
+
+CURRENT STYLE PROFILE:
+${JSON.stringify(styleProfile, null, 2)}
+
+WARDROBE \u2014 ${closetItems.length} items:
 ${JSON.stringify(items, null, 2)}
 
-FORMALITY SCALE: 1=Loungewear, 2=Casual, 3=Weekend casual, 4=Smart casual, 5=Smart casual (elevated), 6=Business casual, 7=Business formal, 8=Cocktail/Evening, 9=Formal/Gala, 10=Black tie. The formality field gives min/max — indicating the range of contexts an item works for.
+TASK:
+The user wants to refine part of their style profile. First, ask which area they'd like to update (aesthetic, colors, silhouette, fabric, lifestyle, what they avoid, aspirations, shopping, fit). Then have a brief focused conversation \u2014 2\u20134 exchanges maximum \u2014 to gather updated information on just that section. Don't redo the full interview.
 
-Photos of every item are included in the first message as images. When an item's has_photo field is false, no image was available — work from the metadata.
+After gathering the updates, tell the user what you're saving and output the complete updated profile JSON (all sections, with the relevant section(s) revised) between <style_profile> and </style_profile> tags. Preserve all other sections exactly. Update the updated_at timestamp.
 
-GUIDELINES:
-— Always reference specific items by name and brand when recommending outfits
-— Consider color coordination (complement or monochrome), fabric weight compatibility, and seasonal appropriateness
-— Be opinionated — make a recommendation, not just a list of options
-— Note vintage items when relevant; they may need thoughtful pairing
-— Use style_notes and claude_context when provided — these are personal notes from the owner
-— Format responses with clear headers and concise bullets for readability`;
+Style: direct, warm, personal. One question at a time.`;
 }
 
 // ─── Markdown renderer ────────────────────────────────────────────────────────
 function renderMarkdown(raw) {
-  // Escape HTML
-  let s = raw
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  let s = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // Fenced code blocks
   s = s.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) =>
@@ -911,7 +1107,7 @@ function renderMarkdown(raw) {
   // Inline code
   s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
 
-  // Headers (must be at line start)
+  // Headers
   s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
   s = s.replace(/^### (.+)$/gm,  '<h3>$1</h3>');
   s = s.replace(/^## (.+)$/gm,   '<h2>$1</h2>');
@@ -924,37 +1120,31 @@ function renderMarkdown(raw) {
   s = s.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
   s = s.replace(/\*\*(.+?)\*\*/g,     '<strong>$1</strong>');
   s = s.replace(/\*([^*\n]+?)\*/g,    '<em>$1</em>');
-  s = s.replace(/—/g, '—'); // preserve em-dashes
 
-  // Unordered lists — collect consecutive list lines
+  // Unordered lists
   s = s.replace(/((?:^[ \t]*[-*+] .+(?:\n|$))+)/gm, match => {
     const items = match.trim().split('\n')
-      .map(l => '<li>' + l.replace(/^[ \t]*[-*+] /, '') + '</li>')
-      .join('');
+      .map(l => '<li>' + l.replace(/^[ \t]*[-*+] /, '') + '</li>').join('');
     return '<ul>' + items + '</ul>\n';
   });
 
   // Ordered lists
   s = s.replace(/((?:^[ \t]*\d+\. .+(?:\n|$))+)/gm, match => {
     const items = match.trim().split('\n')
-      .map(l => '<li>' + l.replace(/^[ \t]*\d+\. /, '') + '</li>')
-      .join('');
+      .map(l => '<li>' + l.replace(/^[ \t]*\d+\. /, '') + '</li>').join('');
     return '<ol>' + items + '</ol>\n';
   });
 
-  // Paragraphs: split on blank lines
+  // Paragraphs
   const blocks = s.split(/\n\n+/);
   s = blocks.map(block => {
     block = block.trim();
     if (!block) return '';
-    // Don't wrap block-level elements
-    if (/^<(?:h[2-4]|ul|ol|pre|hr|li)/.test(block) || block.includes('\x00PRE\x00')) {
+    if (/^<(?:h[2-4]|ul|ol|pre|hr|li)/.test(block) || block.includes('\x00PRE\x00'))
       return block.replace(/\n/g, '<br>');
-    }
     return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
   }).join('\n');
 
-  // Restore code blocks
   s = s.replace(/\x00PRE\x00([\s\S]*?)\x00ENDPRE\x00/g,
     (_, code) => '<pre><code>' + code + '</code></pre>');
 
@@ -965,47 +1155,31 @@ function renderMarkdown(raw) {
 function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
-
 function nowTime() {
   return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
-
 function scrollToBottom() {
   const area = document.getElementById('messages-area');
   area.scrollTop = area.scrollHeight;
 }
-
 function showTyping(show) {
-  // Move typing indicator to end of messages-inner
   const inner     = document.getElementById('messages-inner');
   const indicator = document.getElementById('typing-indicator');
-  if (show) {
-    inner.appendChild(indicator); // ensure it's last
-    indicator.classList.add('show');
-    scrollToBottom();
-  } else {
-    indicator.classList.remove('show');
-  }
+  if (show) { inner.appendChild(indicator); indicator.classList.add('show'); scrollToBottom(); }
+  else       { indicator.classList.remove('show'); }
 }
-
 function appendMessage(role, text, bodyId) {
-  // Remove welcome if first real message
   const welcome = document.getElementById('welcome');
   if (welcome) welcome.remove();
 
-  const inner = document.getElementById('messages-inner');
-  // Insert before typing indicator
+  const inner     = document.getElementById('messages-inner');
   const indicator = document.getElementById('typing-indicator');
-
-  const div = document.createElement('div');
-  div.className = 'message ' + role;
+  const div       = document.createElement('div');
+  div.className   = 'message ' + role;
 
   const labelMap = { user: 'You', assistant: 'Style Assistant', 'system-err': 'Error' };
   const label = labelMap[role] || role;
-
-  const bodyContent = (role === 'assistant')
-    ? renderMarkdown(text)
-    : (role === 'system-err' ? esc(text) : esc(text));
+  const bodyContent = role === 'assistant' ? renderMarkdown(text) : esc(text);
 
   div.innerHTML =
     '<div class="message-header">' +
@@ -1021,6 +1195,378 @@ function appendMessage(role, text, bodyId) {
   return div;
 }
 
+// ─── Streaming helper ─────────────────────────────────────────────────────────
+// Calls the API, streams into a new message div, returns { accumulated, bodyId }
+async function streamAssistantMessage(systemPrompt, messages, stripTag) {
+  const res = await fetch(WORKER_URL + '/proxy/anthropic', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Closet-Passphrase': getPass(),
+      'x-api-key': getApiKey(),
+    },
+    body: JSON.stringify({ model: MODEL, max_tokens: MAX_TOKENS, stream: true, system: systemPrompt, messages }),
+  });
+
+  if (!res.ok) {
+    let errText = '';
+    try { errText = await res.text(); } catch {}
+    throw new Error('Worker returned ' + res.status + (errText ? ' \u2014 ' + errText.slice(0, 200) : ''));
+  }
+
+  showTyping(false);
+  const bodyId = 'body-' + Date.now();
+  appendMessage('assistant', '', bodyId);
+
+  let accumulated = '';
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const raw = line.slice(6).trim();
+      if (raw === '[DONE]') continue;
+      try {
+        const evt = JSON.parse(raw);
+        if (evt.type === 'content_block_delta' && evt.delta && evt.delta.type === 'text_delta') {
+          accumulated += evt.delta.text;
+          const el = document.getElementById(bodyId);
+          if (el) {
+            // While streaming, hide any <style_profile> block from display
+            const display = stripTag
+              ? accumulated.replace(/<style_profile>[\s\S]*$/, '\n\n*(generating your style profile\u2026)*')
+              : accumulated;
+            el.innerHTML = renderMarkdown(display);
+            scrollToBottom();
+          }
+        }
+      } catch {}
+    }
+  }
+
+  // Final render: strip the profile JSON block from displayed text
+  const el = document.getElementById(bodyId);
+  if (el) {
+    const display = stripTag
+      ? accumulated.replace(/<style_profile>[\s\S]*?<\/style_profile>/s, '').trim()
+      : accumulated;
+    el.innerHTML = renderMarkdown(display || accumulated);
+  }
+
+  return { accumulated, bodyId };
+}
+
+// ─── Welcome rendering ────────────────────────────────────────────────────────
+function renderWelcome() {
+  const welcome = document.getElementById('welcome');
+  if (!welcome) return;
+
+  if (!styleProfile) {
+    welcome.innerHTML =
+      '<div class="welcome-title">Your Style Assistant</div>' +
+      '<div class="welcome-sub" style="margin-bottom:0.625rem">I don\'t know your style yet.</div>' +
+      '<div class="welcome-sub" style="max-width:400px;margin:0 auto 2rem">Want to do a quick style interview? It takes about 5 minutes and makes every future recommendation sharper and more personal.</div>' +
+      '<div style="display:flex;align-items:center;gap:18px;justify-content:center">' +
+        '<button class="example-chip interview-start-btn" onclick="startInterview()">Let\'s do it \u2192</button>' +
+        '<button class="skip-link" onclick="skipInterview()">Skip for now</button>' +
+      '</div>';
+  } else {
+    welcome.innerHTML =
+      '<div class="welcome-title">Your Style Assistant</div>' +
+      '<div class="welcome-sub">Ask anything about your wardrobe \u2014 outfit ideas,<br>styling advice, or what to wear for any occasion.</div>' +
+      '<button class="profile-badge" onclick="showProfileInChat()">\u2736 Style profile active</button>' +
+      '<div class="example-chips">' +
+        '<button class="example-chip" onclick="fillExample(this)">What can I wear to a smart-casual dinner?</button>' +
+        '<button class="example-chip" onclick="fillExample(this)">Build an outfit around my Chanel jacket</button>' +
+        '<button class="example-chip" onclick="fillExample(this)">What works for a summer weekend trip?</button>' +
+        '<button class="example-chip" onclick="fillExample(this)">Which of my pieces are the most versatile?</button>' +
+      '</div>';
+  }
+}
+
+// ─── Interview flow ───────────────────────────────────────────────────────────
+async function startInterview() {
+  if (!isConfigured()) { openSettings(); return; }
+
+  interviewMode = true;
+  interviewStep = 1;
+  refineMode    = false;
+  conversation  = [];
+
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+
+  setInterviewProgress(1);
+  isStreaming = true;
+  document.getElementById('send-btn').disabled = true;
+  showTyping(true);
+
+  // Silent trigger — doesn't appear in chat; Claude responds with question 1
+  conversation = [{ role: 'user', content: [{ type: 'text', text: 'Ready. Let\'s begin.' }] }];
+
+  try {
+    const { accumulated } = await streamAssistantMessage(buildInterviewSystemPrompt(), conversation, false);
+    conversation.push({ role: 'assistant', content: accumulated });
+    // First question from Claude — step stays at 1, user hasn't answered yet
+  } catch (e) {
+    showTyping(false);
+    appendMessage('system-err', 'Could not start interview: ' + e.message);
+    interviewMode = false;
+    setStatus('ok', closetItems.length + ' items loaded');
+  } finally {
+    isStreaming = false;
+    document.getElementById('send-btn').disabled = false;
+  }
+}
+
+function skipInterview() {
+  renderWelcome(); // shows normal welcome since styleProfile is null
+  // but with normal chips
+  const welcome = document.getElementById('welcome');
+  if (welcome) {
+    welcome.innerHTML =
+      '<div class="welcome-title">Your Style Assistant</div>' +
+      '<div class="welcome-sub">Ask anything about your wardrobe \u2014 outfit ideas,<br>styling advice, or what to wear for any occasion.</div>' +
+      '<div class="example-chips">' +
+        '<button class="example-chip" onclick="fillExample(this)">What can I wear to a smart-casual dinner?</button>' +
+        '<button class="example-chip" onclick="fillExample(this)">Build an outfit around my Chanel jacket</button>' +
+        '<button class="example-chip" onclick="fillExample(this)">What works for a summer weekend trip?</button>' +
+        '<button class="example-chip" onclick="fillExample(this)">Which of my pieces are the most versatile?</button>' +
+      '</div>' +
+      '<div style="margin-top:1.5rem"><button class="skip-link" style="font-size:9px" onclick="startInterview()">Start style interview later \u2192</button></div>';
+  }
+}
+
+function handleProfileResponse(accumulated, bodyId) {
+  // Look for <style_profile>...</style_profile>
+  const m = accumulated.match(/<style_profile>([\s\S]*?)<\/style_profile>/);
+  if (!m) return false;
+
+  let profile;
+  try { profile = JSON.parse(m[1].trim()); }
+  catch (e) {
+    appendMessage('system-err', 'Could not parse style profile JSON \u2014 ' + e.message);
+    return true; // tag was found, even if JSON failed
+  }
+
+  const now = new Date().toISOString();
+  if (!profile.created_at) profile.created_at = now;
+  profile.updated_at = now;
+  if (!profile.version) profile.version = '1.0';
+
+  saveStoredProfile(profile);
+
+  if (interviewMode) {
+    interviewMode = false;
+    setStatus('ok', closetItems.length + ' items \u00b7 profile saved');
+  }
+  if (refineMode) {
+    refineMode = false;
+    setStatus('ok', closetItems.length + ' items \u00b7 profile updated');
+  }
+
+  // Show profile card in chat
+  showProfileCard(profile, true);
+  return true;
+}
+
+// ─── Profile card ─────────────────────────────────────────────────────────────
+function pRow(lbl, val) {
+  if (!val && val !== 0) return '';
+  return '<div class="profile-row"><span class="profile-row-lbl">' + esc(String(lbl)) + '</span>' +
+    '<span class="profile-row-val">' + esc(String(val)) + '</span></div>';
+}
+
+function pPills(lbl, arr) {
+  if (!arr || !arr.length) return '';
+  return '<div class="profile-row"><span class="profile-row-lbl">' + esc(lbl) + '</span>' +
+    '<div class="profile-row-val"><div class="profile-pills">' +
+    arr.map(k => '<span class="profile-pill">' + esc(k) + '</span>').join('') +
+    '</div></div></div>';
+}
+
+function showProfileCard(profile, showSave) {
+  const inner     = document.getElementById('messages-inner');
+  const indicator = document.getElementById('typing-indicator');
+  const div       = document.createElement('div');
+  div.className   = 'message assistant';
+
+  let h = '<div class="message-header"><span class="message-label">Style Assistant</span>' +
+    '<span class="message-time">' + nowTime() + '</span></div>';
+  h += '<div class="message-body">';
+
+  const intro = showSave
+    ? 'Your style profile is saved. Here\'s what I\'ve got \u2014 you can start chatting anytime, or type "refine my style profile" to update a section.'
+    : 'Here\'s your current style profile.';
+  h += '<p>' + esc(intro) + '</p>';
+
+  h += '<div class="profile-card">';
+  h += '<div class="profile-card-hd"><span class="profile-card-title">Style Profile</span>' +
+    '<span class="profile-card-date">' + new Date(profile.updated_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + '</span></div>';
+
+  if (profile.aesthetic) {
+    h += '<div class="profile-sec"><div class="profile-sec-lbl">Aesthetic</div>';
+    if (profile.aesthetic.self_description) h += pRow('In their words', profile.aesthetic.self_description);
+    if (profile.aesthetic.refined_description) h += pRow('Synthesis', profile.aesthetic.refined_description);
+    h += pPills('Keywords', profile.aesthetic.keywords);
+    if (profile.aesthetic.style_icons && profile.aesthetic.style_icons.length) h += pRow('Icons', profile.aesthetic.style_icons.join(', '));
+    h += '</div>';
+  }
+
+  if (profile.color) {
+    h += '<div class="profile-sec"><div class="profile-sec-lbl">Color</div>';
+    h += pPills('Core palette', profile.color.core_palette);
+    h += pPills('Accents', profile.color.accent_colors);
+    h += pPills('Avoids', profile.color.avoid_colors);
+    if (profile.color.palette_style) h += pRow('Style', profile.color.palette_style);
+    if (profile.color.neutral_preference) h += pRow('Neutrals', profile.color.neutral_preference);
+    if (profile.color.notes) h += pRow('Notes', profile.color.notes);
+    h += '</div>';
+  }
+
+  if (profile.silhouette) {
+    h += '<div class="profile-sec"><div class="profile-sec-lbl">Silhouette</div>';
+    if (profile.silhouette.preferred_proportions) h += pRow('Proportions', profile.silhouette.preferred_proportions);
+    if (profile.silhouette.preferred_fit) h += pRow('Fit', profile.silhouette.preferred_fit);
+    const styling = [
+      profile.silhouette.likes_tucking && 'tucking',
+      profile.silhouette.likes_belting && 'belting',
+      profile.silhouette.likes_layering && 'layering',
+    ].filter(Boolean);
+    if (styling.length) h += pRow('Styling', styling.join(', '));
+    if (profile.silhouette.notes) h += pRow('Notes', profile.silhouette.notes);
+    h += '</div>';
+  }
+
+  if (profile.lifestyle) {
+    h += '<div class="profile-sec"><div class="profile-sec-lbl">Lifestyle</div>';
+    if (profile.lifestyle.contexts && profile.lifestyle.contexts.length) {
+      h += pRow('Contexts', profile.lifestyle.contexts.map(c => c.name + (c.frequency ? ' \u00b7 ' + c.frequency : '')).join(', '));
+    }
+    if (profile.lifestyle.formality_comfort) h += pRow('Formality comfort', profile.lifestyle.formality_comfort + ' / 10');
+    if (profile.lifestyle.tends_to) h += pRow('Tendency', profile.lifestyle.tends_to);
+    if (profile.lifestyle.notes) h += pRow('Notes', profile.lifestyle.notes);
+    h += '</div>';
+  }
+
+  if (profile.avoid) {
+    const hasAvoid = (profile.avoid.never_wear && profile.avoid.never_wear.length) ||
+                     (profile.avoid.disliked_trends && profile.avoid.disliked_trends.length) ||
+                     (profile.avoid.uncomfortable_with && profile.avoid.uncomfortable_with.length) ||
+                     profile.avoid.notes;
+    if (hasAvoid) {
+      h += '<div class="profile-sec"><div class="profile-sec-lbl">Won\'t wear</div>';
+      h += pPills('Never', profile.avoid.never_wear);
+      h += pPills('Dislikes', profile.avoid.disliked_trends);
+      h += pPills('Uncomfortable', profile.avoid.uncomfortable_with);
+      if (profile.avoid.notes) h += pRow('Notes', profile.avoid.notes);
+      h += '</div>';
+    }
+  }
+
+  if (profile.body_and_fit) {
+    const hasFit = (profile.body_and_fit.highlight && profile.body_and_fit.highlight.length) ||
+                   (profile.body_and_fit.de_emphasize && profile.body_and_fit.de_emphasize.length) ||
+                   (profile.body_and_fit.fit_dealbreakers && profile.body_and_fit.fit_dealbreakers.length);
+    if (hasFit) {
+      h += '<div class="profile-sec"><div class="profile-sec-lbl">Fit preferences</div>';
+      h += pPills('Highlights', profile.body_and_fit.highlight);
+      h += pPills('Covers', profile.body_and_fit.de_emphasize);
+      h += pPills('Dealbreakers', profile.body_and_fit.fit_dealbreakers);
+      if (profile.body_and_fit.notes) h += pRow('Notes', profile.body_and_fit.notes);
+      h += '</div>';
+    }
+  }
+
+  if (profile.aspirations) {
+    h += '<div class="profile-sec"><div class="profile-sec-lbl">Direction</div>';
+    if (profile.aspirations.direction) h += pRow('Heading toward', profile.aspirations.direction);
+    h += pPills('Wants more', profile.aspirations.want_more_of);
+    h += pPills('Wardrobe gaps', profile.aspirations.wardrobe_gaps);
+    if (profile.aspirations.notes) h += pRow('Notes', profile.aspirations.notes);
+    h += '</div>';
+  }
+
+  if (profile.shopping) {
+    h += '<div class="profile-sec"><div class="profile-sec-lbl">Shopping</div>';
+    h += pPills('Drawn to', profile.shopping.drawn_to);
+    h += pPills('Puts back', profile.shopping.puts_back);
+    h += pPills('Trusted brands', profile.shopping.trusted_brands);
+    if (profile.shopping.notes) h += pRow('Notes', profile.shopping.notes);
+    h += '</div>';
+  }
+
+  h += '</div>'; // profile-card
+
+  if (showSave) {
+    h += '<div class="profile-save-bar">' +
+      '<span class="profile-save-note">Saved to this browser. Push to GitHub to back it up across devices.</span>' +
+      '<button class="btn btn-accent" onclick="pushProfileToGH(this)" style="font-size:9px;padding:6px 14px">Push to GitHub \u2191</button>' +
+      '</div>';
+  }
+
+  h += '</div>'; // message-body
+  div.innerHTML = h;
+  inner.insertBefore(div, indicator);
+  scrollToBottom();
+}
+
+function showProfileInChat() {
+  const welcome = document.getElementById('welcome');
+  if (welcome) welcome.remove();
+  if (styleProfile) showProfileCard(styleProfile, false);
+}
+
+async function pushProfileToGH(btn) {
+  if (!isConfigured()) { openSettings(); return; }
+  btn.disabled = true;
+  btn.textContent = 'Pushing\u2026';
+  const content = JSON.stringify(styleProfile, null, 2);
+  const b64 = btoa(unescape(encodeURIComponent(content)));
+  try {
+    // GET for existing SHA
+    const existRes = await fetch(WORKER_URL + '/proxy/contents/style-profile.json', {
+      headers: { 'X-Closet-Passphrase': getPass() }
+    });
+    let sha;
+    if (existRes.ok) { const d = await existRes.json(); sha = d.sha; }
+
+    const body = { message: 'Update style-profile.json', content: b64 };
+    if (sha) body.sha = sha;
+
+    const putRes = await fetch(WORKER_URL + '/proxy/contents/style-profile.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Closet-Passphrase': getPass() },
+      body: JSON.stringify(body),
+    });
+    if (!putRes.ok) throw new Error('HTTP ' + putRes.status);
+
+    btn.textContent = '\u2713 Saved';
+    btn.style.background = 'var(--accent-mid)';
+    btn.style.borderColor = 'var(--accent-mid)';
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Failed \u2014 retry';
+    btn.style.background = 'var(--warn)';
+    btn.style.borderColor = 'var(--warn)';
+  }
+}
+
+// ─── Refine intent detection ──────────────────────────────────────────────────
+function isRefineIntent(text) {
+  const t = text.toLowerCase();
+  return (t.includes('refine') || t.includes('update') || t.includes('edit') || t.includes('change') || t.includes('redo') || t.includes('revise')) &&
+         (t.includes('profile') || t.includes('style profile') || t.includes('my style'));
+}
+
 // ─── Send message ─────────────────────────────────────────────────────────────
 async function sendMessage() {
   if (isStreaming) return;
@@ -1032,126 +1578,84 @@ async function sendMessage() {
   if (!isConfigured()) { openSettings(); return; }
 
   if (!closetItems.length) {
-    appendMessage('system-err', 'Wardrobe data not loaded yet — please wait or click Retry in the status bar.');
+    appendMessage('system-err', 'Wardrobe data not loaded \u2014 please wait or click Retry.');
     return;
   }
 
-  // Reset input
+  // Detect refine intent
+  if (!interviewMode && styleProfile && isRefineIntent(text)) {
+    refineMode = true;
+  }
+
   input.value = '';
   autoGrow(input);
-
   isStreaming = true;
   document.getElementById('send-btn').disabled = true;
 
-  // Show user message immediately
   appendMessage('user', text);
 
-  // Fetch images on first send
-  if (!imagesLoaded) {
+  // Fetch images only for first normal conversation turn
+  if (!interviewMode && !refineMode && !imagesLoaded) {
     await fetchAllImages();
   }
 
   // Build content for this turn
   let userContent;
-  if (conversation.length === 0) {
-    // First turn: include all images
+  const isFirstNormalTurn = !interviewMode && !refineMode && conversation.length === 0;
+  if (isFirstNormalTurn) {
     userContent = [];
     for (const item of closetItems) {
       const img = imageCache.get(item.id);
-      if (img) {
-        userContent.push({
-          type: 'image',
-          source: { type: 'base64', media_type: img.mimeType, data: img.data }
-        });
-      }
+      if (img) userContent.push({ type: 'image', source: { type: 'base64', media_type: img.mimeType, data: img.data } });
     }
     userContent.push({ type: 'text', text });
   } else {
-    // Subsequent turns: text only (images stay in turn 1)
     userContent = [{ type: 'text', text }];
   }
 
   conversation.push({ role: 'user', content: userContent });
 
+  // Select system prompt
+  const systemPrompt = interviewMode ? buildInterviewSystemPrompt()
+    : refineMode ? buildRefineSystemPrompt()
+    : buildSystemPrompt();
+
+  // Update interview progress: count assistant turns completed so far
+  if (interviewMode) {
+    const assistantTurns = conversation.filter(m => m.role === 'assistant').length;
+    interviewStep = Math.min(assistantTurns + 1, 12);
+    setInterviewProgress(interviewStep);
+  }
+
   showTyping(true);
 
   try {
-    const res = await fetch(WORKER_URL + '/proxy/anthropic', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Closet-Passphrase': getPass(),
-        'x-api-key': getApiKey(),
-      },
-      body: JSON.stringify({
-        model:      MODEL,
-        max_tokens: MAX_TOKENS,
-        stream:     true,
-        system:     buildSystemPrompt(),
-        messages:   conversation,
-      }),
-    });
+    const { accumulated } = await streamAssistantMessage(
+      systemPrompt,
+      conversation,
+      interviewMode || refineMode  // strip <style_profile> during streaming
+    );
 
-    if (!res.ok) {
-      let errText = '';
-      try { errText = await res.text(); } catch { /**/ }
-      throw new Error('Worker returned ' + res.status +
-        (errText ? ' — ' + errText.slice(0, 300) : ''));
-    }
+    conversation.push({ role: 'assistant', content: accumulated });
 
-    showTyping(false);
-
-    // Create assistant message placeholder
-    const bodyId     = 'body-' + Date.now();
-    let accumulated  = '';
-    appendMessage('assistant', '', bodyId);
-
-    // Read SSE stream
-    const reader  = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer    = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop(); // keep possible partial line
-
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const raw = line.slice(6).trim();
-        if (raw === '[DONE]') continue;
-        try {
-          const evt = JSON.parse(raw);
-          if (
-            evt.type === 'content_block_delta' &&
-            evt.delta && evt.delta.type === 'text_delta'
-          ) {
-            accumulated += evt.delta.text;
-            const el = document.getElementById(bodyId);
-            if (el) {
-              el.innerHTML = renderMarkdown(accumulated);
-              scrollToBottom();
-            }
-          }
-        } catch { /* skip malformed SSE events */ }
+    // Check for profile JSON in interview or refine mode
+    if (interviewMode || refineMode) {
+      const handled = handleProfileResponse(accumulated);
+      if (!handled && interviewMode) {
+        // No profile yet — update step counter for next question
+        const assistantTurns = conversation.filter(m => m.role === 'assistant').length;
+        interviewStep = Math.min(assistantTurns, 12);
+        setInterviewProgress(interviewStep);
       }
     }
 
-    // Ensure final render is clean
-    const el = document.getElementById(bodyId);
-    if (el) el.innerHTML = renderMarkdown(accumulated);
-
-    // Store assistant turn (as string — valid for Anthropic multi-turn)
-    conversation.push({ role: 'assistant', content: accumulated });
-
   } catch (e) {
     showTyping(false);
-    // Remove failed user turn from history
     conversation.pop();
     appendMessage('system-err', e.message);
+    if (interviewMode || refineMode) {
+      // Reset so user can try again
+    }
   } finally {
     isStreaming = false;
     document.getElementById('send-btn').disabled = false;
@@ -1162,17 +1666,12 @@ async function sendMessage() {
 
 // ─── Input helpers ────────────────────────────────────────────────────────────
 function onKeyDown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
 }
-
 function autoGrow(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 180) + 'px';
 }
-
 function fillExample(btn) {
   const input = document.getElementById('chat-input');
   input.value = btn.textContent;
@@ -1181,9 +1680,24 @@ function fillExample(btn) {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-updateSettingsBtn();
-loadCloset();
+async function init() {
+  updateSettingsBtn();
+  const ok = await loadCloset();
+  styleProfile = loadStoredProfile();
+
+  if (ok) {
+    if (styleProfile) {
+      setStatus('ok', closetItems.length + ' items \u00b7 profile loaded');
+    } else {
+      setStatus('ok', closetItems.length + ' items loaded');
+    }
+  }
+
+  renderWelcome();
+}
+
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+init();
 </script>
 </body>
 </html>
