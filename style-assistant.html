@@ -846,6 +846,27 @@ async function loadCloset() {
 }
 
 // ─── Image fetching ───────────────────────────────────────────────────────────
+function avifToWebP(base64Data) {
+  const binary = atob(base64Data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  const blob = new Blob([bytes], { type: 'image/avif' });
+  const objUrl = URL.createObjectURL(blob);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      URL.revokeObjectURL(objUrl);
+      resolve(canvas.toDataURL('image/webp').split(',')[1]);
+    };
+    img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('decode failed')); };
+    img.src = objUrl;
+  });
+}
+
 async function fetchOneImage(item) {
   const url = item.image && item.image.public_url;
   if (!url || imageCache.has(item.id)) return;
@@ -862,11 +883,21 @@ async function fetchOneImage(item) {
       console.log('[image skip]', item.name, '— no content in response', url);
       return;
     }
-    if (!ANTHROPIC_IMAGE_TYPES.has(j.mimeType)) {
-      console.log('[image skip]', item.name, '— unsupported type:', j.mimeType, url);
+    let { content: data, mimeType } = j;
+    if (mimeType === 'image/avif') {
+      try {
+        data = await avifToWebP(data);
+        mimeType = 'image/webp';
+        console.log('[image convert] avif→webp:', item.name);
+      } catch (e) {
+        console.log('[image skip]', item.name, '— avif conversion failed:', e.message, url);
+        return;
+      }
+    } else if (!ANTHROPIC_IMAGE_TYPES.has(mimeType)) {
+      console.log('[image skip]', item.name, '— unsupported type:', mimeType, url);
       return;
     }
-    imageCache.set(item.id, { data: j.content, mimeType: j.mimeType });
+    imageCache.set(item.id, { data, mimeType });
   } catch (e) {
     console.log('[image skip]', item.name, '— fetch error:', e.message, url);
   }
