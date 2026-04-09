@@ -1,0 +1,166 @@
+{
+  "version": "1.0",
+  "created_at": "2024-12-19T00:00:00Z",
+  "updated_at": "2026-04-09T02:56:15.563Z",
+  "aesthetic": {
+    "self_description": "Refined, polished, and French cool but with a little edge. Not hyper-feminine.",
+    "refined_description": "High-low sophistication with intentional contrasts — vintage jeans with runway blazers, effortlessly put together but with thoughtful details that reveal themselves on closer inspection. Polished and in-charge while remaining approachable.",
+    "style_icons": [
+      "Claire Thompson-Jonville",
+      "Emma Grede",
+      "Rosie Huntington-Whiteley",
+      "Sofia Coppola"
+    ],
+    "keywords": [
+      "French cool",
+      "high-low mix",
+      "effortless sophistication",
+      "quiet luxury",
+      "borrowed-from-the-boys",
+      "intentional contrasts"
+    ]
+  },
+  "color": {
+    "core_palette": [
+      "neutrals",
+      "black",
+      "white",
+      "cream",
+      "navy",
+      "gray"
+    ],
+    "accent_colors": [
+      "classic red",
+      "cornflower blue",
+      "dusty pink",
+      "rich saturated tones"
+    ],
+    "avoid_colors": [
+      "hyper-feminine pinks",
+      "pastels",
+      "magenta",
+      "barbie pink"
+    ],
+    "neutral_preference": "mixed",
+    "palette_style": "tonal with strategic color accents",
+    "notes": "Aspires to incorporate more sophisticated color like recent Celine and Chanel runway shows — rich, saturated tones rather than sweet or feminine colors"
+  },
+  "silhouette": {
+    "preferred_proportions": "Contrasting silhouettes — fitted pieces with wide bottoms, structured blazers with relaxed pants",
+    "preferred_fit": "varies",
+    "preferred_lengths": {
+      "tops": "hip to cropped",
+      "bottoms": "tailored to proper length",
+      "dresses": "varies"
+    },
+    "likes_tucking": false,
+    "likes_belting": true,
+    "likes_layering": true,
+    "notes": "Loves mixing fitted and loose pieces, takes all pants to tailor for perfect fit and length. Signature look is open button-down over fitted tank/tee"
+  },
+  "fabric": {
+    "preferred_textures": [
+      "silk",
+      "organza",
+      "wool",
+      "linen",
+      "structured cotton"
+    ],
+    "avoided_textures": [
+      "fabrics that are too heavy",
+      "poor quality materials"
+    ],
+    "structure_preference": "both",
+    "weight_preference": "varies",
+    "cares_about_material": true,
+    "notes": "Actively seeks texture play, learning to appreciate top-tier fabrics. Feels more polished and powerful in quality materials"
+  },
+  "lifestyle": {
+    "contexts": [
+      {
+        "name": "work",
+        "frequency": "4-5 days per week",
+        "formality": "5-7"
+      },
+      {
+        "name": "date night",
+        "frequency": "up to once per week",
+        "formality": "6-8"
+      },
+      {
+        "name": "weekends with kids",
+        "frequency": "regular",
+        "formality": "2-4"
+      }
+    ],
+    "formality_comfort": 6,
+    "tends_to": "match",
+    "notes": "Balances desire for styled outfits with practical realities of parenting and hot climate. Changes out of nice clothes immediately when home to protect from kids"
+  },
+  "avoid": {
+    "never_wear": [
+      "drop waists",
+      "barrel jeans",
+      "tiny sunglasses",
+      "Tabi shoes",
+      "navel-exposing pieces"
+    ],
+    "disliked_trends": [
+      "old lady upper east sider prim proper"
+    ],
+    "uncomfortable_with": [
+      "anything that makes her stick out inappropriately for local casual culture"
+    ],
+    "notes": "Very aware of proportions that work for 5'4\" frame, avoids trends that would shorten or widen legs"
+  },
+  "body_and_fit": {
+    "highlight": [
+      "proportions through tailoring"
+    ],
+    "de_emphasize": [
+      "navel area"
+    ],
+    "fit_dealbreakers": [
+      "drop waists",
+      "barrel cuts",
+      "anything that shortens legs"
+    ],
+    "notes": "Takes all pants to tailor for perfect fit, comfortable trying different silhouettes as long as proportions work"
+  },
+  "aspirations": {
+    "direction": "More intentional texture play and sophisticated color integration while maintaining effortless cool",
+    "want_more_of": [
+      "colored jeans beyond blue",
+      "tailored trousers",
+      "silk/linen/cotton shorts",
+      "creative styling approaches"
+    ],
+    "wardrobe_gaps": [
+      "alternatives to default blue jeans",
+      "non-jean short options",
+      "styled looks beyond button-down layering formula"
+    ],
+    "notes": "Wants to graduate from blue jeans as default and rely less on open button-down over tank formula"
+  },
+  "shopping": {
+    "drawn_to": [
+      "quality fabric",
+      "thoughtful cut",
+      "unexpected details",
+      "sophisticated styling"
+    ],
+    "puts_back": [
+      "poor fabric quality",
+      "unflattering fit",
+      "heavier weight than expected"
+    ],
+    "trusted_brands": [
+      "Saint Laurent",
+      "KALLMEYER",
+      "Chanel",
+      "TWP",
+      "Agolde"
+    ],
+    "notes": "Values fabric quality and fit above all, attracted to pieces with unique details like Ossou's bi-color buttons"
+  }
+}
