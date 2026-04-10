@@ -1689,6 +1689,11 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 </div>
 
 <script>
+// ─── Proxy credentials ────────────────────────────────────────────────────────
+const WORKER_URL = 'https://closet-proxy.doesthislookright.workers.dev';
+const getApiKey  = () => localStorage.getItem('anthropic_key') || '';
+const getPass    = () => localStorage.getItem('worker_passphrase') || '';
+
 // ═══════════════════════════════════════════════
 // DATA
 // ═══════════════════════════════════════════════
@@ -1938,6 +1943,12 @@ async function fetchFromURL() {
   setStatus('fetch-status', 'loading', 'Fetching product details and images…');
   document.getElementById('legend').style.display = 'none';
 
+  if (!getApiKey() || !getPass()) {
+    setStatus('fetch-status', 'error', 'API key and passphrase required — set them in Style Assistant settings first.');
+    btn.disabled = false; btn.textContent = 'Look up ↗';
+    return;
+  }
+
   try {
     // ── STEP 1: Try Shopify JSON API (fast, reliable, full-res images) ──
     let shopifyData = null;
@@ -1981,9 +1992,13 @@ If you cannot find image URLs in the page source, set image_url to null — do n
       ? `Extract style details (color, pattern, silhouette, fabric, weight, care, category, cut, seasons) from this product page. The store name/brand is also useful. Page: ${url}\n\nExtra context from the product description: ${shopifyData._body.slice(0, 800)}`
       : `Extract full product details and image URLs from: ${url}`;
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Closet-Passphrase': getPass(),
+        'x-api-key': getApiKey(),
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1400,
@@ -2223,6 +2238,12 @@ async function analyzePhoto() {
   btn.disabled = true; btn.textContent = 'Analyzing…';
   setStatus('photo-status', 'loading', 'AI is analyzing the item photo to pre-fill visual fields…');
 
+  if (!getApiKey() || !getPass()) {
+    setStatus('photo-status', 'error', 'API key and passphrase required — set them in Style Assistant settings first.');
+    btn.disabled = false; btn.textContent = 'Analyze ✦';
+    return;
+  }
+
   const sys = `You are a fashion product visual analyzer. Given a photo of a clothing item, extract what you can see. Return ONLY valid JSON with no markdown fences:
 {
   "color": null,
@@ -2243,9 +2264,13 @@ notes: any helpful styling or fit observations from the photo
 Only include fields you can confidently infer. Return null for uncertain fields.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Closet-Passphrase': getPass(),
+        'x-api-key': getApiKey(),
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 600,
@@ -2323,6 +2348,12 @@ async function analyzeStylePhoto() {
   btn.disabled = true; btn.textContent = 'Analyzing…';
   setStatus('style-status', 'loading', 'Analyzing style…');
 
+  if (!getApiKey() || !getPass()) {
+    setStatus('style-status', 'error', 'API key and passphrase required — set them in Style Assistant settings first.');
+    btn.disabled = false; btn.textContent = 'Analyze ✦';
+    return;
+  }
+
   const today = new Date().toISOString().split('T')[0];
   const sys = `You are a personal stylist analyzing outfit photos and style inspiration for a style profile. Given an image, produce a concise style note in this format:
 
@@ -2348,9 +2379,13 @@ AI note: [one sentence on what this suggests about the person's style identity]
 Be specific, perceptive, and helpful. Focus on what's distinctive and repeatable about the aesthetic.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
-      headers: {'Content-Type':'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Closet-Passphrase': getPass(),
+        'x-api-key': getApiKey(),
+      },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 600,
