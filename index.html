@@ -269,7 +269,7 @@ function filterGallery(){
   filtered.forEach(item=>{
     const el=document.createElement('div');el.className='card';el.setAttribute('data-id',item.id);el.onclick=()=>openDrawer(item.id);
     const dept=item.category.department||'';
-    el.innerHTML='<div class="card-img">'+(item.image&&item.image.filename?'<img src="'+esc(item.image.filename)+'" alt="'+esc(item.identity.name)+'" loading="lazy" onerror="this.parentNode.innerHTML=\''+esc(EMOJI[dept]||'🧺')+'\'"/>':'<span>'+esc(EMOJI[dept]||'🧺')+'</span>')+'</div><div class="card-info"><div class="card-brand">'+esc(item.identity.brand||'')+'</div><div class="card-name">'+esc(item.identity.name)+'</div><div class="card-cat">'+esc([item.category.category,item.category.subcategory].filter(Boolean).join(' › '))+'</div><div class="card-badges">'+(item.identity.vintage&&item.identity.vintage.is_vintage?'<span class="badge badge-vintage">Vintage</span>':'')+'</div></div>';
+    el.innerHTML='<div class="card-img">'+(item.image&&item.image.public_url?'<img src="'+esc(item.image.public_url)+'" alt="'+esc(item.identity.name)+'" loading="lazy" onerror="this.parentNode.innerHTML=\''+esc(EMOJI[dept]||'🧺')+'\'"/>':'<span>'+esc(EMOJI[dept]||'🧺')+'</span>')+'</div><div class="card-info"><div class="card-brand">'+esc(item.identity.brand||'')+'</div><div class="card-name">'+esc(item.identity.name)+'</div><div class="card-cat">'+esc([item.category.category,item.category.subcategory].filter(Boolean).join(' › '))+'</div><div class="card-badges">'+(item.identity.vintage&&item.identity.vintage.is_vintage?'<span class="badge badge-vintage">Vintage</span>':'')+'</div></div>';
     gal.appendChild(el);
   });
 }
@@ -287,7 +287,7 @@ function openDrawer(id){
   const item=itemsMap[id];if(!item)return;
   const dept=item.category.department||'';
   const imgEl=document.getElementById('d-img');
-  imgEl.innerHTML=item.image&&item.image.filename?'<img src="'+esc(item.image.filename)+'" alt="'+esc(item.identity.name)+'" onerror="this.parentNode.innerHTML=\''+esc(EMOJI[dept]||'🧺')+'\'"/>':'<span>'+esc(EMOJI[dept]||'🧺')+'</span>';
+  imgEl.innerHTML=item.image&&item.image.public_url?'<img src="'+esc(item.image.public_url)+'" alt="'+esc(item.identity.name)+'" onerror="this.parentNode.innerHTML=\''+esc(EMOJI[dept]||'🧺')+'\'"/>':'<span>'+esc(EMOJI[dept]||'🧺')+'</span>';
   document.getElementById('d-brand').textContent=item.identity.brand||'';
   document.getElementById('d-name').textContent=item.identity.name;
   document.getElementById('d-cat').textContent=[item.category.department,item.category.category,item.category.subcategory].filter(Boolean).join(' › ');
