@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "schema_updated": "2026-04-08",
+  "schema_updated": "2026-04-11",
   "owner_id": null,
   "items": [
     {
@@ -1911,6 +1911,139 @@
           "90mm heel",
           "Spring Summer 2026 Collection",
           "glossy finish"
+        ],
+        "notes": null,
+        "claude_context": null,
+        "rotation": null
+      }
+    },
+    {
+      "id": "1244e8e2-ff6c-417e-a4d2-0791b1cd458b",
+      "created_at": "2026-04-11T01:04:27.926Z",
+      "updated_at": "2026-04-11T01:04:27.926Z",
+      "status": "active",
+      "identity": {
+        "name": "Double-Breasted Classic Wool Coat",
+        "brand": "Phoebe Philo",
+        "collection_season": "FW 2025",
+        "year_acquired": 2026,
+        "vintage": {
+          "is_vintage": false,
+          "era": null
+        },
+        "sku": "p01071413",
+        "colorway_name": "Concrete"
+      },
+      "category": {
+        "department": "Clothing",
+        "category": "Coats",
+        "subcategory": "Wool coat"
+      },
+      "image": {
+        "filename": "1244e8e2-ff6c-417e-a4d2-0791b1cd458b.jpg",
+        "format": "jpg",
+        "public_url": "https://my-closet.pages.dev/1244e8e2-ff6c-417e-a4d2-0791b1cd458b.jpg",
+        "alt_images": []
+      },
+      "visual": {
+        "colors": {
+          "primary": "Dark Gray",
+          "secondary": null,
+          "tertiary": null
+        },
+        "pattern": "Solid",
+        "print_description": "Dark grey wool with flex of ash-colored fibers",
+        "silhouette": "Oversized",
+        "length": "Ankle",
+        "sleeve_length": "Long sleeve",
+        "embellishment": [
+          "None"
+        ]
+      },
+      "construction": {
+        "fabric": [
+          {
+            "material": "Wool",
+            "percentage": 70
+          },
+          {
+            "material": "Polyamide",
+            "percentage": 30
+          }
+        ],
+        "lining": {
+          "type": "Full",
+          "material": "Cupro"
+        },
+        "weight": "Heavy",
+        "structure": null,
+        "seasons": [
+          "fall",
+          "winter"
+        ],
+        "care": "Dry clean only",
+        "country_of_origin": "Italy",
+        "sustainability": [
+          "None"
+        ]
+      },
+      "fit": {
+        "cut": "Oversized",
+        "size": "34",
+        "size_system": "FR",
+        "inseam_length": null,
+        "fit_notes": "Crafted to a slightly oversized silhouette, with a double-breasted buttoned front and peaked lapels.",
+        "fit_relative": null
+      },
+      "wearing_profile": {
+        "formality": {
+          "min": 3,
+          "max": 7
+        },
+        "occasions": [
+          "Cold",
+          "Winter"
+        ],
+        "feels": [
+          "Warm",
+          "Cozy",
+          "Powerful"
+        ],
+        "style_notes": null,
+        "works_with": []
+      },
+      "provenance": {
+        "retailer": "Mytheresa",
+        "source_url": "https://www.mytheresa.com/us/en/women/phoebe-philo-double-breasted-coat-black-p01071413",
+        "purchase_price": {
+          "amount": 5400,
+          "currency": "USD"
+        },
+        "retail_price": {
+          "amount": null,
+          "currency": null
+        },
+        "condition_at_acquisition": "New with tags",
+        "current_condition": "New without tags",
+        "storage_location": "Storage Closet",
+        "acquisition_type": "Purchased"
+      },
+      "wearing_history": {
+        "last_worn": null,
+        "times_worn": 0,
+        "cost_per_wear": null,
+        "outfit_log": []
+      },
+      "meta": {
+        "tags": [
+          "luxury",
+          "designer",
+          "tailored",
+          "menswear-inspired",
+          "classic",
+          "winter",
+          "cold",
+          "snow"
         ],
         "notes": null,
         "claude_context": null,
