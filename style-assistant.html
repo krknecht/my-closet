@@ -647,7 +647,6 @@ async function fetchOneImage(item) {
   if (!url || imageCache.has(item.id)) return;
   try {
     const r = await fetch(WORKER_URL + '/proxy/image?url=' + encodeURIComponent(url), {
-      credentials: 'include',
     });
     if (!r.ok) {
       console.log('[image skip]', item.name, '— worker error', r.status, url);
@@ -1024,7 +1023,6 @@ function appendMessage(role, text, bodyId) {
 async function streamAssistantMessage(systemPrompt, messages, stripTag) {
   const res = await fetch(WORKER_URL + '/proxy/anthropic', {
     method: 'POST',
-    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -1354,7 +1352,6 @@ async function pushProfileToGH(btn) {
   try {
     // GET for existing SHA
     const existRes = await fetch(WORKER_URL + '/proxy/contents/style-profile.json', {
-      credentials: 'include',
     });
     let sha;
     if (existRes.ok) { const d = await existRes.json(); sha = d.sha; }
@@ -1364,7 +1361,6 @@ async function pushProfileToGH(btn) {
 
     const putRes = await fetch(WORKER_URL + '/proxy/contents/style-profile.json', {
       method: 'PUT',
-      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });

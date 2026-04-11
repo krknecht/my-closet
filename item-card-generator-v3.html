@@ -1922,7 +1922,6 @@ If you cannot find image URLs in the page source, set image_url to null — do n
 
     const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
-      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -2187,7 +2186,6 @@ Only include fields you can confidently infer. Return null for uncertain fields.
   try {
     const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
-      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -2295,7 +2293,6 @@ Be specific, perceptive, and helpful. Focus on what's distinctive and repeatable
   try {
     const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
-      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -2902,7 +2899,7 @@ async function pushFileToGitHub(path, content, isBinary = false) {
   // Get existing SHA
   let sha = null;
   try {
-    const check = await fetch(WORKER_URL + '/proxy/contents/' + path, { credentials: 'include' });
+    const check = await fetch(WORKER_URL + '/proxy/contents/' + path);
     if (check.ok) { sha = (await check.json()).sha || null; }
   } catch(e) {}
 
@@ -2912,7 +2909,6 @@ async function pushFileToGitHub(path, content, isBinary = false) {
 
   const res = await fetch(WORKER_URL + '/proxy/contents/' + path, {
     method: 'PUT',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
