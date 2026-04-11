@@ -956,7 +956,6 @@ initFilters();filterGallery();
 </body>
 </html>`;
 }
-}
 async function buildAndPushIndex(){
   try{await ghPush('index.html',buildIndexHTML());}
   catch(e){console.warn('Index push failed:',e.message);}
