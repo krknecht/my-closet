@@ -1,8 +1,9 @@
 /**
- * Closet Manager — Cloudflare Worker proxy for GitHub API
+ * Closet Manager — Cloudflare Worker proxy
+ * Authentication: Cloudflare Access (cookie-based) — no passphrase header needed.
  *
  * Secrets (set via `wrangler secret put` or the Cloudflare dashboard):
- *   CLOSET_PASSPHRASE   Shared secret sent by closet-manager.html
+ *   ANTHROPIC_API_KEY   Anthropic API key used server-side
  *   GITHUB_TOKEN        Personal access token with `repo` scope
  *
  * Vars (set in wrangler.toml or the dashboard):
@@ -13,12 +14,13 @@
  *   GET  /proxy/contents/{path}        Read file from GitHub (returns GitHub API JSON)
  *   PUT  /proxy/contents/{path}        Write file to GitHub (body: {message, content, sha?})
  *   GET  /proxy/image?url={encodedUrl} Fetch external image; returns {content: base64, mimeType}
+ *   POST /proxy/anthropic              Proxy to Anthropic Messages API using server-side key
  */
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, PUT, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Closet-Passphrase, x-api-key',
+  'Access-Control-Allow-Headers': 'Content-Type',
 };
 
 export default {
@@ -46,16 +48,9 @@ export default {
   },
 };
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-
-function isAuthed(request, env) {
-  return request.headers.get('X-Closet-Passphrase') === env.CLOSET_PASSPHRASE;
-}
-
 // ─── GitHub contents proxy ────────────────────────────────────────────────────
 
 async function handleContents(request, env, filePath) {
-  if (!isAuthed(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   if (!filePath) return jsonResponse({ error: 'Missing file path' }, 400);
 
   const ghUrl = `https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${filePath}`;
@@ -91,7 +86,6 @@ async function handleContents(request, env, filePath) {
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/avif']);
 
 async function handleImage(request, env, imageUrl) {
-  if (!isAuthed(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   if (!imageUrl) return jsonResponse({ error: 'Missing url parameter' }, 400);
 
   let parsed;
@@ -122,10 +116,6 @@ async function handleImage(request, env, imageUrl) {
 
 async function handleAnthropic(request, env) {
   if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
-  if (!isAuthed(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
-
-  const apiKey = request.headers.get('x-api-key');
-  if (!apiKey) return jsonResponse({ error: 'Missing x-api-key header' }, 400);
 
   let body;
   try { body = await request.json(); }
@@ -135,7 +125,7 @@ async function handleAnthropic(request, env) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
+      'x-api-key': env.ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify(body),

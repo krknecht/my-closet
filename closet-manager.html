@@ -127,21 +127,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .preview-box{flex:1;padding:.875rem 1.125rem;font-size:10px;line-height:1.7;color:var(--ink-3);white-space:pre-wrap;word-break:break-all;overflow-y:auto}
 .save-bar{padding:.875rem 1.375rem;border-top:1px solid var(--rule);background:var(--paper);display:flex;gap:8px;align-items:center;position:sticky;bottom:0;z-index:10}
 .save-status{font-size:10px;color:var(--ink-3);flex:1;line-height:1.5}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(28,25,23,.5);z-index:500;align-items:center;justify-content:center;padding:1.5rem}
-.modal-overlay.open{display:flex}
-.modal{background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius-lg);width:100%;max-width:460px;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(28,25,23,.15)}
-.modal-header{padding:1.125rem 1.375rem .875rem;border-bottom:1px solid var(--rule);display:flex;align-items:center}
-.modal-title{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300;flex:1}
-.modal-close{background:none;border:none;font-size:20px;color:var(--ink-3);cursor:pointer;padding:2px 4px}
-.modal-close:hover{color:var(--ink)}
-.modal-body{padding:1.125rem 1.375rem}
-.modal-intro{font-size:11px;color:var(--ink-2);line-height:1.7;margin-bottom:.875rem;padding:8px 10px;background:var(--blue-light);border-left:3px solid var(--blue);border-radius:var(--radius)}
-.modal-footer{padding:.875rem 1.375rem;border-top:1px solid var(--rule);display:flex;gap:8px;justify-content:flex-end}
-.gh-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border:1px solid var(--rule);border-radius:var(--radius);background:transparent;color:var(--ink-3);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px}
-.gh-btn:hover{background:var(--paper-3);color:var(--ink);border-color:var(--ink-3)}
-.gh-btn.connected{color:var(--accent-mid);border-color:var(--accent-mid);background:var(--accent-light)}
-.gh-dot{width:6px;height:6px;border-radius:50%;background:var(--ink-3)}
-.gh-btn.connected .gh-dot{background:var(--accent-mid)}
 .back-link{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:5px 12px;border:1px solid var(--rule);border-radius:var(--radius);color:var(--ink-3);text-decoration:none;transition:all .15s;white-space:nowrap}
 .back-link:hover{border-color:var(--ink-3);color:var(--ink)}
 @media(max-width:860px){.app{grid-template-columns:1fr}.list-panel,.preview-panel{display:none}}
@@ -152,7 +137,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 <header>
   <a class="back-link" href="index.html">← Gallery</a>
   <div><div class="header-title">Closet</div><div class="header-sub">Manager</div></div>
-  <button class="gh-btn" id="gh-btn" onclick="openGHModal()"><span class="gh-dot"></span><span id="gh-btn-label">Connect</span></button>
 </header>
 <div class="app">
 <!-- LEFT -->
@@ -355,19 +339,6 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
   <div class="preview-box" id="preview-box">Fill in the form to preview the JSON record…</div>
 </div>
 </div>
-<!-- GitHub modal -->
-<div class="modal-overlay" id="gh-modal" onclick="if(event.target===this)closeGHModal()">
-  <div class="modal">
-    <div class="modal-header"><span class="modal-title">Connection</span><button class="modal-close" onclick="closeGHModal()">×</button></div>
-    <div class="modal-body">
-      <div class="modal-intro">Enter your deployed Cloudflare Worker URL and the passphrase you set as a worker secret. Your Anthropic API key is used for URL lookups and photo analysis. All credentials are stored only in this browser.</div>
-      <div class="field" style="margin-bottom:10px"><div class="fl">Worker URL</div><input type="url" id="worker-url" placeholder="https://closet-proxy.doesthislookright.workers.dev" autocomplete="off"/></div>
-      <div class="field" style="margin-bottom:10px"><div class="fl">Passphrase</div><input type="password" id="worker-passphrase" placeholder="your-secret-passphrase" autocomplete="off"/></div>
-      <div class="field"><div class="fl">Anthropic API key</div><input type="password" id="anthropic-key" placeholder="sk-ant-…" autocomplete="off"/></div>
-    </div>
-    <div class="modal-footer"><button class="btn btn-warn" onclick="clearGHSettings()">Clear</button><button class="btn btn-accent" onclick="saveGHSettings()">Save &amp; connect</button></div>
-  </div>
-</div>
 <script>
 const TX={
   Clothing:{Tops:['T-shirt','Tank / Cami','Blouse','Shirt / Button-down','Polo','Bodysuit','Halter top','Bralette','Corset'],Knitwear:['Crewneck sweater','V-neck sweater','Cardigan','Turtleneck','Vest / Tank knit','Sweater vest','Twin set'],'Sweatshirts & Hoodies':['Crewneck sweatshirt','Hoodie','Zip-up sweatshirt'],Jackets:['Blazer','Leather jacket','Denim jacket','Bomber','Track jacket','Overshirt','Utility jacket','Cape / Poncho','Vest / Gilet','Evening jacket'],Coats:['Trench coat','Overcoat / Topcoat','Wool coat','Puffer / Down coat','Shearling coat','Fur coat','Raincoat / Windbreaker','Parka','Cape coat'],'Suits & Sets':['Suit jacket','Suit trouser','Full suit','Co-ord / Matching set','Tuxedo jacket'],Dresses:['Mini dress','Midi dress','Maxi dress','Gown','Shirt dress','Wrap dress','Slip dress','Bodycon dress','Smock / Tiered dress','Strapless dress','Cocktail dress'],'Jumpsuits & Playsuits':['Jumpsuit','Playsuit / Romper','Boilersuit'],Trousers:['Tailored trouser','Wide-leg trouser','Straight trouser','Cropped trouser','Pleated trouser','Cargo pant','Jogger / Sweatpant','Legging'],Jeans:['Straight','Slim','Wide-leg','Bootcut','Skinny','Barrel / Baggy','Cropped','Flare'],Skirts:['Mini skirt','Midi skirt','Maxi skirt','Pencil skirt','A-line skirt','Wrap skirt','Pleated skirt','Leather skirt'],Shorts:['Tailored short','Denim short','Casual / Relaxed short','Cycling short']},
@@ -393,25 +364,18 @@ let editingId=null,occasions=[],feels=[],tags=[],photoBase64=null,photoMime='ima
 window._fetchedImageUrl=null;
 
 // Worker connection
-function ghC(){return{workerUrl:(localStorage.getItem('worker_url')||'').replace(/\/$/,''),passphrase:localStorage.getItem('worker_passphrase')||''};}
-function ghOK(){const c=ghC();return !!(c.workerUrl&&c.passphrase);}
-function anthropicKey(){return localStorage.getItem('anthropic_key')||'';}
-function updateGHBtn(){const b=document.getElementById('gh-btn'),l=document.getElementById('gh-btn-label');if(ghOK()){b.classList.add('connected');l.textContent='Worker';}else{b.classList.remove('connected');l.textContent='Connect';}}
-function openGHModal(){const c=ghC();document.getElementById('worker-url').value=c.workerUrl;document.getElementById('worker-passphrase').value=c.passphrase;document.getElementById('anthropic-key').value=anthropicKey();document.getElementById('gh-modal').classList.add('open');}
-function closeGHModal(){document.getElementById('gh-modal').classList.remove('open');}
-function saveGHSettings(){const u=document.getElementById('worker-url').value.trim(),p=document.getElementById('worker-passphrase').value.trim(),ak=document.getElementById('anthropic-key').value.trim();if(!u||!p){alert('Fill in Worker URL and Passphrase.');return;}localStorage.setItem('worker_url',u);localStorage.setItem('worker_passphrase',p);if(ak)localStorage.setItem('anthropic_key',ak);updateGHBtn();closeGHModal();}
-function clearGHSettings(){if(!confirm('Remove connection settings?'))return;['worker_url','worker_passphrase','anthropic_key'].forEach(k=>localStorage.removeItem(k));updateGHBtn();closeGHModal();}
-async function ghSHA(path){const c=ghC();const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{headers:{'X-Closet-Passphrase':c.passphrase},credentials:'include'});if(!r.ok)return null;return (await r.json()).sha||null;}
-async function ghPush(path,content,isBin=false){const c=ghC();if(!c.passphrase)throw new Error('No passphrase configured.');const sha=await ghSHA(path);const b64=isBin?content:btoa(unescape(encodeURIComponent(content)));const body={message:'Update '+path+' via Closet Manager',content:b64};if(sha)body.sha=sha;const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{method:'PUT',credentials:'include',headers:{'X-Closet-Passphrase':c.passphrase,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||e.message||'Worker '+r.status);}return r.json();}
-async function ghFetchJSON(path){const c=ghC();const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{headers:{'X-Closet-Passphrase':c.passphrase},credentials:'include'});if(!r.ok)return null;const d=await r.json();return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g,'')))));}
+const WORKER_URL='https://closet-proxy.doesthislookright.workers.dev';
+async function ghSHA(path){const r=await fetch(WORKER_URL+'/proxy/contents/'+path,{credentials:'include'});if(!r.ok)return null;return (await r.json()).sha||null;}
+async function ghPush(path,content,isBin=false){const sha=await ghSHA(path);const b64=isBin?content:btoa(unescape(encodeURIComponent(content)));const body={message:'Update '+path+' via Closet Manager',content:b64};if(sha)body.sha=sha;const r=await fetch(WORKER_URL+'/proxy/contents/'+path,{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||e.message||'Worker '+r.status);}return r.json();}
+async function ghFetchJSON(path){const r=await fetch(WORKER_URL+'/proxy/contents/'+path,{credentials:'include'});if(!r.ok)return null;const d=await r.json();return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g,'')))));}
 
 // Load closet
 async function loadCloset(){
   let data=null;
-  if(ghOK()){try{data=await ghFetchJSON('closet.json');}catch(e){}}
+  try{data=await ghFetchJSON('closet.json');}catch(e){}
   if(!data){try{const r=await fetch('closet.json?t='+Date.now());if(r.ok)data=await r.json();}catch(e){}}
   if(data){closetData=data;renderList();}
-  else{document.getElementById('item-list').innerHTML='<div style="padding:1.25rem;font-size:11px;color:var(--ink-3);line-height:1.7">Could not load closet.json.<br>Connect GitHub or serve via local server (python3 -m http.server 8080).</div>';}
+  else{document.getElementById('item-list').innerHTML='<div style="padding:1.25rem;font-size:11px;color:var(--ink-3);line-height:1.7">Could not load closet.json.<br>Serve via local server (python3 -m http.server 8080).</div>';}
 }
 
 // List
@@ -507,10 +471,10 @@ function loadPhoto(file){
 
 // AI analyze
 async function analyzePhoto(){
-  if(!photoBase64)return;const ak=anthropicKey();if(!ak){alert('Add your Anthropic API key in the Connect modal.');return;}
+  if(!photoBase64)return;
   const btn=document.getElementById('analyze-btn');btn.disabled=true;btn.textContent='Analyzing…';setSt('photo-status','loading','AI is analyzing the photo…');
   try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ak,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:'Analyze this clothing photo. Return ONLY valid JSON, no markdown:\n{"color1":null,"color2":null,"pattern":null,"silhouette":null,"weight":null,"dept":null,"cat":null,"fabric_estimate":null,"sleeve_length":null,"length":null}\npattern:Solid|Stripe|Plaid / Check|Floral|Geometric|Animal print|Abstract|Graphic|Embellished|Other\nweight:Sheer|Lightweight|Medium|Medium-heavy|Heavy\ndept:Clothing|Shoes|Bags|Accessories|Jewelry|Activewear|Swimwear|Lingerie & Loungewear\nsleeve_length:Strapless|Sleeveless|Cap sleeve|Short sleeve|Three-quarter|Long sleeve\nlength:Cropped|Hip|Thigh|Waist|Knee|Midi|Maxi|Ankle|Floor',messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:photoMime,data:photoBase64}},{type:'text',text:'Analyze this clothing item.'}]}]})});
+    const r=await fetch(WORKER_URL+'/proxy/anthropic',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,system:'Analyze this clothing photo. Return ONLY valid JSON, no markdown:\n{"color1":null,"color2":null,"pattern":null,"silhouette":null,"weight":null,"dept":null,"cat":null,"fabric_estimate":null,"sleeve_length":null,"length":null}\npattern:Solid|Stripe|Plaid / Check|Floral|Geometric|Animal print|Abstract|Graphic|Embellished|Other\nweight:Sheer|Lightweight|Medium|Medium-heavy|Heavy\ndept:Clothing|Shoes|Bags|Accessories|Jewelry|Activewear|Swimwear|Lingerie & Loungewear\nsleeve_length:Strapless|Sleeveless|Cap sleeve|Short sleeve|Three-quarter|Long sleeve\nlength:Cropped|Hip|Thigh|Waist|Knee|Midi|Maxi|Ankle|Floor',messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:photoMime,data:photoBase64}},{type:'text',text:'Analyze this clothing item.'}]}]})});
     const d=await r.json();const text=d.content.filter(b=>b.type==='text').map(b=>b.text).join('');const p=parseJSON(text);let n=0;
     if(p.color1){setV('color1',p.color1);markA('f-color1');n++;}if(p.color2){setV('color2',p.color2);markA('f-color2');n++;}
     if(p.pattern){setSel('pattern',p.pattern);n++;}if(p.weight){setSel('weight',p.weight);n++;}if(p.length){setSel('length',p.length);n++;}if(p.sleeve_length){setSel('sleeve',p.sleeve_length);n++;}
@@ -556,13 +520,12 @@ function showUrlImageSection(imageUrl,allUrls){
 }
 async function fetchFromURL(){
   const url=document.getElementById('pdp-url').value.trim();if(!url)return;
-  const ak=anthropicKey();if(!ak){alert('Add your Anthropic API key in the Connect modal.');return;}
   const btn=document.getElementById('fetch-btn');btn.disabled=true;btn.textContent='Fetching…';setSt('fetch-status','loading','Fetching product data…');
   try{
     let shopify=null;if(url.includes('/products/')){shopify=await tryShopify(url);}
     const sys='Extract product details from this URL via web search. Return ONLY valid JSON, no markdown:\n{"name":null,"brand":null,"color1":null,"color2":null,"pattern":null,"silhouette":null,"fabric":[],"weight":null,"dept":null,"cat":null,"subcat":null,"sleeve_length":null,"length":null,"seasons":[],"care":null,"origin":null,"sku":null,"colorway":null,"retailer":null,"tags":[],"image_url":null,"image_urls":[]}\nfabric:[{material,percentage}]\ndept:Clothing|Shoes|Bags|Accessories|Jewelry|Activewear|Swimwear|Lingerie & Loungewear\npattern:Solid|Stripe|Plaid / Check|Floral|Geometric|Animal print|Abstract|Graphic|Embellished|Other\nweight:Sheer|Lightweight|Medium|Medium-heavy|Heavy\nsleeve_length:Strapless|Sleeveless|Cap sleeve|Short sleeve|Three-quarter|Long sleeve\nlength:Cropped|Hip|Thigh|Waist|Knee|Midi|Maxi|Ankle|Floor\nseasons:subset of [spring,summer,fall,winter]\nimage_url:best full-res image URL\nimage_urls:up to 6 product image URLs';
     const msg=shopify?'Extract style details from: '+url+'\n\nDescription: '+shopify._body.slice(0,800):'Extract full product details from: '+url;
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ak,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,tools:[{type:'web_search_20250305',name:'web_search'}],system:sys,messages:[{role:'user',content:msg}]})});
+    const r=await fetch(WORKER_URL+'/proxy/anthropic',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1400,tools:[{type:'web_search_20250305',name:'web_search'}],system:sys,messages:[{role:'user',content:msg}]})});
     const data=await r.json();const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');const p=parseJSON(text);
     if(shopify){
       if(shopify.name&&!p.name)p.name=shopify.name;if(shopify.brand&&!p.brand)p.brand=shopify.brand;
@@ -619,7 +582,6 @@ function buildRecord(id){
 // Save
 async function saveItem(){
   if(!gv('name').trim()){alert('Item name is required.');return;}
-  if(!ghOK()){alert('Connect the worker first — click the Connect button in the header.');return;}
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='Saving…';
   const st=document.getElementById('save-status');st.textContent='Building record…';
   try{
@@ -627,7 +589,7 @@ async function saveItem(){
     if(photoBase64){st.textContent='Pushing image…';await ghPush(rec.image.filename,photoBase64,true);imgOK=true;}
     else if(window._fetchedImageUrl){
       st.textContent='Fetching product image…';
-      try{const c=ghC();const ir=await fetch(c.workerUrl+'/proxy/image?url='+encodeURIComponent(window._fetchedImageUrl),{headers:{'X-Closet-Passphrase':c.passphrase},credentials:'include'});if(ir.ok){const imgData=await ir.json();await ghPush(rec.image.filename,imgData.content,true);imgOK=true;}}
+      try{const ir=await fetch(WORKER_URL+'/proxy/image?url='+encodeURIComponent(window._fetchedImageUrl),{credentials:'include'});if(ir.ok){const imgData=await ir.json();await ghPush(rec.image.filename,imgData.content,true);imgOK=true;}}
       catch(e){console.warn('Image push failed:',e.message);}
     }
     st.textContent='Updating closet.json…';
@@ -716,8 +678,7 @@ function escA(s){return String(s||'').replace(/"/g,'&quot;');}
 function attachL(){document.querySelectorAll('input[type=text],input[type=url],input[type=number],select,textarea').forEach(e=>{if(!e.getAttribute('oninput')&&!e.getAttribute('onchange')){e.addEventListener('input',updatePreview);e.addEventListener('change',updatePreview);}});}
 
 // Init
-updateGHBtn();updateFormality();initCBs();addFabricRow();onDeptChange();attachL();updatePreview();loadCloset();
-if(!ghOK())openGHModal();
+updateFormality();initCBs();addFabricRow();onDeptChange();attachL();updatePreview();loadCloset();
 </script>
 </body>
 </html>

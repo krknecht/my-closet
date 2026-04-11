@@ -135,37 +135,6 @@ header {
 .nav-tab.active { background: #fff; color: #000; }
 .nav-tab:not(.active):hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-.settings-btn {
-  font-family: 'Vend Sans', sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 6px 14px;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: var(--radius);
-  background: transparent;
-  color: rgba(255,255,255,0.6);
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: 12px;
-}
-
-.settings-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.5); }
-.settings-btn.configured { color: var(--accent-mid); border-color: var(--accent-mid); background: var(--accent-light); }
-
-.settings-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-  opacity: 0.6;
-}
-
-.settings-btn.configured .settings-dot { opacity: 1; }
-
 /* ── Status bar ── */
 .status-bar {
   flex-shrink: 0;
@@ -531,109 +500,6 @@ textarea#chat-input::placeholder { color: var(--ink-3); }
   margin-right: auto;
 }
 
-/* ── Modal ── */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(28, 25, 23, 0.5);
-  z-index: 200;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
-}
-.modal-overlay.open { display: flex; }
-
-.modal {
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
-  width: min(460px, 92vw);
-  box-shadow: 0 8px 32px rgba(28, 25, 23, 0.14);
-}
-
-.modal-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--rule);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-title {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: var(--ink-3);
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  transition: color 0.12s;
-}
-.modal-close:hover { color: var(--ink); }
-
-.modal-body { padding: 1.5rem; }
-
-.modal-intro {
-  font-size: 11px;
-  color: var(--ink-3);
-  line-height: 1.7;
-  margin-bottom: 1.25rem;
-  letter-spacing: 0.02em;
-}
-
-.m-field { margin-bottom: 14px; }
-.m-field:last-child { margin-bottom: 0; }
-
-.m-field-label {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin-bottom: 5px;
-  display: block;
-}
-
-.m-field input {
-  width: 100%;
-  font-size: 13px;
-  font-family: 'Vend Sans', sans-serif;
-  padding: 8px 10px;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  background: var(--paper);
-  color: var(--ink);
-  transition: border-color 0.15s, background 0.15s;
-}
-.m-field input:focus {
-  outline: none;
-  border-color: var(--ink-3);
-  background: #fff;
-}
-
-.modal-footer {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--rule);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.modal-note {
-  font-size: 9px;
-  color: var(--ink-3);
-  letter-spacing: 0.04em;
-  flex: 1;
-  line-height: 1.55;
-}
-
 .btn {
   font-family: 'Vend Sans', sans-serif;
   font-size: 10px;
@@ -667,10 +533,6 @@ textarea#chat-input::placeholder { color: var(--ink-3); }
     <a class="nav-tab" href="/">Gallery</a>
     <a class="nav-tab active" href="/style-assistant.html">Style Assistant</a>
   </nav>
-  <button class="settings-btn" id="settings-btn" onclick="openSettings()">
-    <span class="settings-dot"></span>
-    <span id="settings-label">Settings</span>
-  </button>
 </header>
 
 <div class="status-bar">
@@ -718,34 +580,6 @@ textarea#chat-input::placeholder { color: var(--ink-3); }
   </div>
 </div>
 
-<!-- Settings modal -->
-<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeSettings()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">API settings</span>
-      <button class="modal-close" onclick="closeSettings()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-intro">
-        Your credentials are stored only in this browser's localStorage and sent directly to the Cloudflare Worker proxy — they are never stored server-side or logged.
-      </div>
-      <div class="m-field">
-        <label class="m-field-label" for="inp-apikey">Anthropic API key</label>
-        <input type="password" id="inp-apikey" placeholder="sk-ant-…" autocomplete="off"/>
-      </div>
-      <div class="m-field">
-        <label class="m-field-label" for="inp-passphrase">Worker passphrase</label>
-        <input type="password" id="inp-passphrase" placeholder="passphrase" autocomplete="off"/>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <span class="modal-note">Stored in browser localStorage only — clears if you clear browser data.</span>
-      <button class="btn" style="color:var(--warn)" onclick="clearSettings()">Clear</button>
-      <button class="btn btn-accent" onclick="saveSettings()">Save</button>
-    </div>
-  </div>
-</div>
-
 <script>
 // ─── Config ───────────────────────────────────────────────────────────────────
 const WORKER_URL  = 'https://closet-proxy.doesthislookright.workers.dev';
@@ -767,11 +601,6 @@ let interviewStep = 1;           // estimated topic progress 1–12
 let styleProfile  = null;        // parsed style-profile object
 let refineMode    = false;       // true during targeted profile edit
 
-// ─── Credentials ─────────────────────────────────────────────────────────────
-const getApiKey    = () => localStorage.getItem('anthropic_key') || '';
-const getPass      = () => localStorage.getItem('worker_passphrase') || '';
-const isConfigured = () => !!(getApiKey() && getPass());
-
 // ─── Profile storage ──────────────────────────────────────────────────────────
 function loadStoredProfile() {
   try { return JSON.parse(localStorage.getItem('style_profile') || 'null'); }
@@ -781,38 +610,6 @@ function saveStoredProfile(profile) {
   profile.updated_at = new Date().toISOString();
   localStorage.setItem('style_profile', JSON.stringify(profile));
   styleProfile = profile;
-}
-
-// ─── Settings modal ───────────────────────────────────────────────────────────
-function openSettings() {
-  document.getElementById('inp-apikey').value     = getApiKey();
-  document.getElementById('inp-passphrase').value = getPass();
-  document.getElementById('settings-modal').classList.add('open');
-  document.getElementById('inp-apikey').focus();
-}
-function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('open');
-}
-function saveSettings() {
-  const key  = document.getElementById('inp-apikey').value.trim();
-  const pass = document.getElementById('inp-passphrase').value.trim();
-  if (key)  localStorage.setItem('anthropic_key', key);
-  if (pass) localStorage.setItem('worker_passphrase', pass);
-  updateSettingsBtn();
-  closeSettings();
-}
-function clearSettings() {
-  localStorage.removeItem('anthropic_key');
-  localStorage.removeItem('worker_passphrase');
-  document.getElementById('inp-apikey').value     = '';
-  document.getElementById('inp-passphrase').value = '';
-  updateSettingsBtn();
-}
-function updateSettingsBtn() {
-  const btn   = document.getElementById('settings-btn');
-  const label = document.getElementById('settings-label');
-  if (isConfigured()) { btn.classList.add('configured'); label.textContent = 'Connected'; }
-  else                { btn.classList.remove('configured'); label.textContent = 'Settings'; }
 }
 
 // ─── Status bar ───────────────────────────────────────────────────────────────
@@ -850,7 +647,6 @@ async function fetchOneImage(item) {
   if (!url || imageCache.has(item.id)) return;
   try {
     const r = await fetch(WORKER_URL + '/proxy/image?url=' + encodeURIComponent(url), {
-      headers: { 'X-Closet-Passphrase': getPass() },
       credentials: 'include',
     });
     if (!r.ok) {
@@ -1231,8 +1027,6 @@ async function streamAssistantMessage(systemPrompt, messages, stripTag) {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'X-Closet-Passphrase': getPass(),
-      'x-api-key': getApiKey(),
     },
     body: JSON.stringify({ model: MODEL, max_tokens: MAX_TOKENS, stream: true, system: systemPrompt, messages }),
   });
@@ -1323,8 +1117,6 @@ function renderWelcome() {
 
 // ─── Interview flow ───────────────────────────────────────────────────────────
 async function startInterview() {
-  if (!isConfigured()) { openSettings(); return; }
-
   interviewMode = true;
   interviewStep = 1;
   refineMode    = false;
@@ -1555,7 +1347,6 @@ function showProfileInChat() {
 }
 
 async function pushProfileToGH(btn) {
-  if (!isConfigured()) { openSettings(); return; }
   btn.disabled = true;
   btn.textContent = 'Pushing\u2026';
   const content = JSON.stringify(styleProfile, null, 2);
@@ -1563,7 +1354,6 @@ async function pushProfileToGH(btn) {
   try {
     // GET for existing SHA
     const existRes = await fetch(WORKER_URL + '/proxy/contents/style-profile.json', {
-      headers: { 'X-Closet-Passphrase': getPass() },
       credentials: 'include',
     });
     let sha;
@@ -1575,7 +1365,7 @@ async function pushProfileToGH(btn) {
     const putRes = await fetch(WORKER_URL + '/proxy/contents/style-profile.json', {
       method: 'PUT',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json', 'X-Closet-Passphrase': getPass() },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
     if (!putRes.ok) throw new Error('HTTP ' + putRes.status);
@@ -1605,8 +1395,6 @@ async function sendMessage() {
   const input = document.getElementById('chat-input');
   const text  = input.value.trim();
   if (!text) return;
-
-  if (!isConfigured()) { openSettings(); return; }
 
   if (!closetItems.length) {
     appendMessage('system-err', 'Wardrobe data not loaded \u2014 please wait or click Retry.');
@@ -1712,7 +1500,6 @@ function fillExample(btn) {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
-  updateSettingsBtn();
   const ok = await loadCloset();
   styleProfile = loadStoredProfile();
 
@@ -1727,7 +1514,6 @@ async function init() {
   renderWelcome();
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
 init();
 </script>
 </body>

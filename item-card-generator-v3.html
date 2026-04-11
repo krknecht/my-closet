@@ -1143,34 +1143,6 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 .nav-tab.active { background: #fff; color: #000; }
 .nav-tab:not(.active):hover { background: rgba(255,255,255,0.1); color: #fff; }
 
-/* GitHub settings */
-.gh-settings-btn {
-  font-family: 'Vend Sans', sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 6px 12px;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: var(--radius);
-  background: transparent;
-  color: rgba(255,255,255,0.6);
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.gh-settings-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(255,255,255,0.5); }
-.gh-settings-btn.connected { color: var(--accent-mid); border-color: var(--accent-mid); background: var(--accent-light); }
-
-.gh-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.6);
-  flex-shrink: 0;
-}
-.gh-settings-btn.connected .gh-dot { background: var(--accent-mid); }
-
 /* GitHub push status in modal */
 .push-status {
   font-size: 10px;
@@ -1212,10 +1184,6 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
     <a class="nav-tab active" href="/item-card-generator-v3.html">Generator</a>
     <a class="nav-tab" href="/style-assistant.html">Style Assistant</a>
   </nav>
-  <button class="gh-settings-btn" id="gh-settings-btn" onclick="openGHSettings()">
-    <span class="gh-dot"></span>
-    <span id="gh-settings-label">GitHub</span>
-  </button>
   <div class="mode-tabs">
     <button class="mode-tab active" onclick="switchMode('url')" id="tab-url">URL Import</button>
     <button class="mode-tab" onclick="switchMode('manual')" id="tab-manual">Manual Entry</button>
@@ -1634,38 +1602,6 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 
 </div><!-- /app -->
 
-<!-- ═══ GITHUB SETTINGS MODAL ═══ -->
-<div class="modal-overlay" id="gh-modal" onclick="if(event.target===this)closeGHSettings()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">GitHub settings</span>
-      <button class="modal-close" onclick="closeGHSettings()">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-intro">
-        Your token is saved only in this browser and sent directly to GitHub's API — it never passes through any server or conversation. Generate a token at github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) with <strong>repo</strong> scope checked.
-      </div>
-      <div class="field" style="margin-bottom:12px;">
-        <div class="field-label">GitHub username or email</div>
-        <input type="text" id="gh-username" placeholder="e.g. katerknecht" autocomplete="off" />
-      </div>
-      <div class="field" style="margin-bottom:12px;">
-        <div class="field-label">Repository name</div>
-        <input type="text" id="gh-repo" placeholder="e.g. my-closet" autocomplete="off" />
-      </div>
-      <div class="field" style="margin-bottom:12px;">
-        <div class="field-label">Personal access token</div>
-        <input type="password" id="gh-token" placeholder="ghp_…" autocomplete="off" />
-      </div>
-    </div>
-    <div class="modal-footer">
-      <span class="modal-note">Stored in browser localStorage — clears if you clear browser data.</span>
-      <button class="btn" onclick="clearGHSettings()" style="color:var(--warn)">Clear</button>
-      <button class="btn btn-accent" onclick="saveGHSettings()">Save &amp; connect</button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══ EXPORT CHECKLIST MODAL ═══ -->
 <div class="modal-overlay" id="export-modal" onclick="if(event.target===this)closeExportModal()">
   <div class="modal">
@@ -1689,10 +1625,8 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
 </div>
 
 <script>
-// ─── Proxy credentials ────────────────────────────────────────────────────────
+// ─── Config ───────────────────────────────────────────────────────────────────
 const WORKER_URL = 'https://closet-proxy.doesthislookright.workers.dev';
-const getApiKey  = () => localStorage.getItem('anthropic_key') || '';
-const getPass    = () => localStorage.getItem('worker_passphrase') || '';
 
 // ═══════════════════════════════════════════════
 // DATA
@@ -1943,12 +1877,6 @@ async function fetchFromURL() {
   setStatus('fetch-status', 'loading', 'Fetching product details and images…');
   document.getElementById('legend').style.display = 'none';
 
-  if (!getApiKey() || !getPass()) {
-    setStatus('fetch-status', 'error', 'API key and passphrase required — set them in Style Assistant settings first.');
-    btn.disabled = false; btn.textContent = 'Look up ↗';
-    return;
-  }
-
   try {
     // ── STEP 1: Try Shopify JSON API (fast, reliable, full-res images) ──
     let shopifyData = null;
@@ -1997,8 +1925,6 @@ If you cannot find image URLs in the page source, set image_url to null — do n
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'X-Closet-Passphrase': getPass(),
-        'x-api-key': getApiKey(),
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -2239,12 +2165,6 @@ async function analyzePhoto() {
   btn.disabled = true; btn.textContent = 'Analyzing…';
   setStatus('photo-status', 'loading', 'AI is analyzing the item photo to pre-fill visual fields…');
 
-  if (!getApiKey() || !getPass()) {
-    setStatus('photo-status', 'error', 'API key and passphrase required — set them in Style Assistant settings first.');
-    btn.disabled = false; btn.textContent = 'Analyze ✦';
-    return;
-  }
-
   const sys = `You are a fashion product visual analyzer. Given a photo of a clothing item, extract what you can see. Return ONLY valid JSON with no markdown fences:
 {
   "color": null,
@@ -2270,8 +2190,6 @@ Only include fields you can confidently infer. Return null for uncertain fields.
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'X-Closet-Passphrase': getPass(),
-        'x-api-key': getApiKey(),
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -2350,12 +2268,6 @@ async function analyzeStylePhoto() {
   btn.disabled = true; btn.textContent = 'Analyzing…';
   setStatus('style-status', 'loading', 'Analyzing style…');
 
-  if (!getApiKey() || !getPass()) {
-    setStatus('style-status', 'error', 'API key and passphrase required — set them in Style Assistant settings first.');
-    btn.disabled = false; btn.textContent = 'Analyze ✦';
-    return;
-  }
-
   const today = new Date().toISOString().split('T')[0];
   const sys = `You are a personal stylist analyzing outfit photos and style inspiration for a style profile. Given an image, produce a concise style note in this format:
 
@@ -2386,8 +2298,6 @@ Be specific, perceptive, and helpful. Focus on what's distinctive and repeatable
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'X-Closet-Passphrase': getPass(),
-        'x-api-key': getApiKey(),
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -2757,18 +2667,13 @@ function exportGallery() {
   checklist.innerHTML = '';
   document.getElementById('push-status').className = 'push-status';
 
-  // Show/hide push button based on GitHub connection
+  // Always show push button
   const pushBtn = document.getElementById('push-all-btn');
-  pushBtn.style.display = ghIsConnected() ? 'inline-block' : 'none';
+  pushBtn.style.display = 'inline-block';
 
   // Update intro text
   const intro = document.getElementById('checklist-intro');
-  if (ghIsConnected()) {
-    const c = ghConfig();
-    intro.innerHTML = `Connected to <strong>${c.username}/${c.repo}</strong>. Click <em>Push all to GitHub ↑</em> to update your live gallery automatically. Images available from this session will be pushed; others need manual upload.`;
-  } else {
-    intro.innerHTML = `For each item, copy the exact filename and save the image from the retailer's site using that name. Upload all images to your GitHub repository alongside <code>index.html</code>. <a href="#" onclick="openGHSettings();return false;" style="color:var(--accent-mid)">Connect GitHub ↗</a> to push automatically.`;
-  }
+  intro.innerHTML = `Click <em>Push all to GitHub ↑</em> to push images from this session to your repository. Items without image data in this session will need manual upload.`;
 
   galleryItems.forEach(item => {
     const fn = item.imageFilename || (slugify(item.name) + '.jpg');
@@ -2783,18 +2688,16 @@ function exportGallery() {
     row.appendChild(nameEl);
 
     // Image availability indicator
-    if (ghIsConnected()) {
-      const badge = document.createElement('span');
-      badge.style.cssText = 'font-size:9px;padding:2px 7px;border-radius:20px;flex-shrink:0;';
-      if (hasImage) {
-        badge.textContent = 'ready to push';
-        badge.style.cssText += 'background:var(--accent-light);color:var(--accent-mid);border:1px solid var(--accent-mid);';
-      } else {
-        badge.textContent = 'manual upload needed';
-        badge.style.cssText += 'background:var(--gold-light);color:var(--gold);border:1px solid #ddc98a;';
-      }
-      row.appendChild(badge);
+    const badge = document.createElement('span');
+    badge.style.cssText = 'font-size:9px;padding:2px 7px;border-radius:20px;flex-shrink:0;';
+    if (hasImage) {
+      badge.textContent = 'ready to push';
+      badge.style.cssText += 'background:var(--accent-light);color:var(--accent-mid);border:1px solid var(--accent-mid);';
+    } else {
+      badge.textContent = 'manual upload needed';
+      badge.style.cssText += 'background:var(--gold-light);color:var(--gold);border:1px solid #ddc98a;';
     }
+    row.appendChild(badge);
 
     const fnEl = document.createElement('span');
     fnEl.className = 'checklist-filename';
@@ -2994,106 +2897,29 @@ function escHTML(str) {
 // GITHUB INTEGRATION
 // ═══════════════════════════════════════════════
 
-function ghConfig() {
-  return {
-    username: localStorage.getItem('gh_username') || '',
-    repo: localStorage.getItem('gh_repo') || '',
-    token: localStorage.getItem('gh_token') || '',
-  };
-}
-
-function ghIsConnected() {
-  const c = ghConfig();
-  return !!(c.username && c.repo && c.token);
-}
-
-function updateGHButton() {
-  const btn = document.getElementById('gh-settings-btn');
-  const label = document.getElementById('gh-settings-label');
-  if (ghIsConnected()) {
-    const c = ghConfig();
-    btn.classList.add('connected');
-    label.textContent = c.repo;
-  } else {
-    btn.classList.remove('connected');
-    label.textContent = 'GitHub';
-  }
-}
-
-function openGHSettings() {
-  const c = ghConfig();
-  document.getElementById('gh-username').value = c.username;
-  document.getElementById('gh-repo').value = c.repo;
-  document.getElementById('gh-token').value = c.token;
-  document.getElementById('gh-modal').classList.add('open');
-}
-
-function closeGHSettings() {
-  document.getElementById('gh-modal').classList.remove('open');
-}
-
-function saveGHSettings() {
-  const username = document.getElementById('gh-username').value.trim();
-  const repo = document.getElementById('gh-repo').value.trim();
-  const token = document.getElementById('gh-token').value.trim();
-  if (!username || !repo || !token) { alert('Please fill in all three fields.'); return; }
-  localStorage.setItem('gh_username', username);
-  localStorage.setItem('gh_repo', repo);
-  localStorage.setItem('gh_token', token);
-  updateGHButton();
-  closeGHSettings();
-}
-
-function clearGHSettings() {
-  if (!confirm('Remove saved GitHub credentials from this browser?')) return;
-  localStorage.removeItem('gh_username');
-  localStorage.removeItem('gh_repo');
-  localStorage.removeItem('gh_token');
-  updateGHButton();
-  closeGHSettings();
-}
-
-// Push a single file to GitHub via API (create or update)
+// Push a single file to GitHub via worker proxy (create or update)
 async function pushFileToGitHub(path, content, isBinary = false) {
-  const c = ghConfig();
-  if (!c.token) throw new Error('No GitHub token configured');
-
-  const apiUrl = `https://api.github.com/repos/${encodeURIComponent(c.username)}/${encodeURIComponent(c.repo)}/contents/${path}`;
-
-  // Check if file exists to get its SHA (required for updates)
+  // Get existing SHA
   let sha = null;
   try {
-    const check = await fetch(apiUrl, {
-      headers: { 'Authorization': `Bearer ${c.token}`, 'Accept': 'application/vnd.github+json' }
-    });
-    if (check.ok) {
-      const existing = await check.json();
-      sha = existing.sha;
-    }
+    const check = await fetch(WORKER_URL + '/proxy/contents/' + path, { credentials: 'include' });
+    if (check.ok) { sha = (await check.json()).sha || null; }
   } catch(e) {}
 
-  // content must be base64
   const base64content = isBinary ? content : btoa(unescape(encodeURIComponent(content)));
-
-  const body = {
-    message: `Update ${path} via Closet generator`,
-    content: base64content,
-  };
+  const body = { message: `Update ${path} via Closet generator`, content: base64content };
   if (sha) body.sha = sha;
 
-  const res = await fetch(apiUrl, {
+  const res = await fetch(WORKER_URL + '/proxy/contents/' + path, {
     method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${c.token}`,
-      'Accept': 'application/vnd.github+json',
-      'Content-Type': 'application/json',
-    },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `GitHub API error ${res.status}`);
+    throw new Error(err.message || `Worker error ${res.status}`);
   }
   return await res.json();
 }
@@ -3114,8 +2940,6 @@ async function imageUrlToBase64(url) {
 }
 
 async function pushAllToGitHub() {
-  if (!ghIsConnected()) { openGHSettings(); return; }
-
   const pushBtn = document.getElementById('push-all-btn');
   const statusEl = document.getElementById('push-status');
 
@@ -3128,13 +2952,6 @@ async function pushAllToGitHub() {
   }
 
   try {
-    // 1. Push index.html
-    setPS('loading', 'Building and pushing index.html…');
-    const htmlContent = buildGalleryHTML();
-    await pushFileToGitHub('index.html', htmlContent);
-
-    // 2. Push images that are cached (fetched via URL import this session)
-    const imageItems = galleryItems.filter(i => i.imageFilename && _imgCache.has(i._srcUrl));
     let pushed = 0;
     let skipped = 0;
 
@@ -3154,7 +2971,7 @@ async function pushAllToGitHub() {
     }
 
     const skipMsg = skipped > 0 ? ` ${skipped} image(s) need manual upload (no image data in session).` : '';
-    setPS('success', `✓ Pushed index.html${pushed > 0 ? ` + ${pushed} image(s)` : ''} to GitHub. Cloudflare will update in ~1 minute.${skipMsg}`);
+    setPS('success', `✓ Pushed ${pushed > 0 ? `${pushed} image(s)` : 'nothing'} to GitHub. Cloudflare will update in ~1 minute.${skipMsg}`);
   } catch(err) {
     setPS('error', `Push failed: ${err.message}`);
     console.error(err);
@@ -3171,7 +2988,6 @@ async function pushAllToGitHub() {
 updateFormality();
 onCategoryChange(); // init subcategory state
 renderGallery();    // restore any session gallery
-updateGHButton();   // reflect saved GitHub config
 </script>
 </body>
 </html>
