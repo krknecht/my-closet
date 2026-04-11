@@ -401,9 +401,9 @@ function openGHModal(){const c=ghC();document.getElementById('worker-url').value
 function closeGHModal(){document.getElementById('gh-modal').classList.remove('open');}
 function saveGHSettings(){const u=document.getElementById('worker-url').value.trim(),p=document.getElementById('worker-passphrase').value.trim(),ak=document.getElementById('anthropic-key').value.trim();if(!u||!p){alert('Fill in Worker URL and Passphrase.');return;}localStorage.setItem('worker_url',u);localStorage.setItem('worker_passphrase',p);if(ak)localStorage.setItem('anthropic_key',ak);updateGHBtn();closeGHModal();}
 function clearGHSettings(){if(!confirm('Remove connection settings?'))return;['worker_url','worker_passphrase','anthropic_key'].forEach(k=>localStorage.removeItem(k));updateGHBtn();closeGHModal();}
-async function ghSHA(path){const c=ghC();const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{headers:{'X-Closet-Passphrase':c.passphrase}});if(!r.ok)return null;return (await r.json()).sha||null;}
-async function ghPush(path,content,isBin=false){const c=ghC();if(!c.passphrase)throw new Error('No passphrase configured.');const sha=await ghSHA(path);const b64=isBin?content:btoa(unescape(encodeURIComponent(content)));const body={message:'Update '+path+' via Closet Manager',content:b64};if(sha)body.sha=sha;const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{method:'PUT',headers:{'X-Closet-Passphrase':c.passphrase,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||e.message||'Worker '+r.status);}return r.json();}
-async function ghFetchJSON(path){const c=ghC();const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{headers:{'X-Closet-Passphrase':c.passphrase}});if(!r.ok)return null;const d=await r.json();return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g,'')))));}
+async function ghSHA(path){const c=ghC();const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{headers:{'X-Closet-Passphrase':c.passphrase},credentials:'include'});if(!r.ok)return null;return (await r.json()).sha||null;}
+async function ghPush(path,content,isBin=false){const c=ghC();if(!c.passphrase)throw new Error('No passphrase configured.');const sha=await ghSHA(path);const b64=isBin?content:btoa(unescape(encodeURIComponent(content)));const body={message:'Update '+path+' via Closet Manager',content:b64};if(sha)body.sha=sha;const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{method:'PUT',credentials:'include',headers:{'X-Closet-Passphrase':c.passphrase,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||e.message||'Worker '+r.status);}return r.json();}
+async function ghFetchJSON(path){const c=ghC();const r=await fetch(c.workerUrl+'/proxy/contents/'+path,{headers:{'X-Closet-Passphrase':c.passphrase},credentials:'include'});if(!r.ok)return null;const d=await r.json();return JSON.parse(decodeURIComponent(escape(atob(d.content.replace(/\n/g,'')))));}
 
 // Load closet
 async function loadCloset(){
@@ -627,7 +627,7 @@ async function saveItem(){
     if(photoBase64){st.textContent='Pushing image…';await ghPush(rec.image.filename,photoBase64,true);imgOK=true;}
     else if(window._fetchedImageUrl){
       st.textContent='Fetching product image…';
-      try{const c=ghC();const ir=await fetch(c.workerUrl+'/proxy/image?url='+encodeURIComponent(window._fetchedImageUrl),{headers:{'X-Closet-Passphrase':c.passphrase}});if(ir.ok){const imgData=await ir.json();await ghPush(rec.image.filename,imgData.content,true);imgOK=true;}}
+      try{const c=ghC();const ir=await fetch(c.workerUrl+'/proxy/image?url='+encodeURIComponent(window._fetchedImageUrl),{headers:{'X-Closet-Passphrase':c.passphrase},credentials:'include'});if(ir.ok){const imgData=await ir.json();await ghPush(rec.image.filename,imgData.content,true);imgOK=true;}}
       catch(e){console.warn('Image push failed:',e.message);}
     }
     st.textContent='Updating closet.json…';

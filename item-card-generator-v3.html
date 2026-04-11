@@ -1994,6 +1994,7 @@ If you cannot find image URLs in the page source, set image_url to null — do n
 
     const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         'X-Closet-Passphrase': getPass(),
@@ -2266,6 +2267,7 @@ Only include fields you can confidently infer. Return null for uncertain fields.
   try {
     const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         'X-Closet-Passphrase': getPass(),
@@ -2381,6 +2383,7 @@ Be specific, perceptive, and helpful. Focus on what's distinctive and repeatable
   try {
     const res = await fetch(WORKER_URL + '/proxy/anthropic', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         'X-Closet-Passphrase': getPass(),
