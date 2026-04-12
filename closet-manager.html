@@ -117,6 +117,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .status.warn{display:block;background:var(--gold-light);color:var(--gold);border-left-color:var(--gold)}
 .status.error{display:block;background:var(--warn-light);color:var(--warn);border-left-color:var(--warn)}
 .analyze-bar{display:none;margin-top:7px;padding:7px 9px;background:var(--accent-light);border-radius:var(--radius);border:1px solid #c5d9c5;align-items:center;gap:9px}
+.recover-bar{display:none;margin-top:7px;padding:7px 10px;background:var(--warn-light);border:1px solid #e8c8be;border-radius:var(--radius);font-size:11px;color:var(--warn);align-items:center;gap:9px}
 .analyze-bar p{font-size:10px;color:var(--accent);flex:1;line-height:1.5}
 .legend{display:none;align-items:center;gap:6px;font-size:10px;color:var(--ink-3);margin-top:7px}
 .legend.show{display:flex}
@@ -173,6 +174,10 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
       <div class="img-zone-lbl"><span>📷</span>Drag & drop or click to upload a photo</div>
     </div>
     <div class="img-prev" id="img-prev" style="display:none"><img id="img-prev-img" src="" alt=""/></div>
+    <div class="recover-bar" id="recover-bar">
+      <span style="flex:1">⚠ Image file is missing from Pages — recover it before saving.</span>
+      <button id="recover-btn" class="btn" style="color:var(--warn);border-color:#e8c8be" onclick="recoverImage()">Recover from source URL</button>
+    </div>
     <div class="analyze-bar" id="analyze-bar"><p>Photo ready. AI can analyze it to pre-fill visual fields.</p><button class="btn btn-accent" id="analyze-btn" onclick="analyzePhoto()">Analyze ✦</button></div>
     <div class="status" id="photo-status"></div>
   </div>
@@ -469,6 +474,60 @@ function loadPhoto(file){
   r.readAsDataURL(file);
 }
 
+// Image existence check and recovery flow
+async function checkImageExists(item){
+  const bar=document.getElementById('recover-bar');
+  if(!item.image||!item.image.filename){bar.style.display='none';return;}
+  try{
+    const r=await fetch('https://my-closet.pages.dev/'+item.image.filename,{method:'HEAD'});
+    if(r.ok){bar.style.display='none';}
+    else{showRecoverBar(item);}
+  }catch(e){
+    // Network error — skip check, don't show bar
+    bar.style.display='none';
+  }
+}
+
+function showRecoverBar(item){
+  const bar=document.getElementById('recover-bar');
+  const btn=document.getElementById('recover-btn');
+  const srcUrl=item.provenance&&item.provenance.source_url;
+  bar.style.display='flex';
+  if(srcUrl){
+    btn.disabled=false;
+    btn.title='';
+    btn.dataset.sourceUrl=srcUrl;
+  }else{
+    btn.disabled=true;
+    btn.title='No source URL recorded for this item — upload a replacement photo manually';
+    btn.dataset.sourceUrl='';
+  }
+}
+
+async function recoverImage(){
+  const btn=document.getElementById('recover-btn');
+  const srcUrl=btn.dataset.sourceUrl;
+  if(!srcUrl)return;
+  btn.disabled=true;btn.textContent='Fetching…';
+  setSt('photo-status','loading','Fetching image from source URL…');
+  try{
+    const r=await fetch(WORKER_URL+'/proxy/image?url='+encodeURIComponent(srcUrl));
+    if(!r.ok){const ed=await r.json().catch(()=>({}));throw new Error(ed.error||'Worker returned '+r.status);}
+    const d=await r.json();
+    photoBase64=d.content;
+    photoMime=d.mimeType||'image/jpeg';
+    const w=document.getElementById('img-prev'),i=document.getElementById('img-prev-img');
+    i.src='data:'+photoMime+';base64,'+photoBase64;
+    w.style.display='flex';
+    document.getElementById('analyze-bar').style.display='flex';
+    document.getElementById('recover-bar').style.display='none';
+    setSt('photo-status','success','Image fetched. Review the preview, then click Save to push it to GitHub.');
+  }catch(e){
+    setSt('photo-status','error','Recovery failed: '+e.message+'. You can upload a replacement photo manually.');
+  }
+  btn.disabled=false;btn.textContent='Recover from source URL';
+}
+
 // AI analyze
 async function analyzePhoto(){
   if(!photoBase64)return;
@@ -582,24 +641,41 @@ function buildRecord(id){
 // Save
 async function saveItem(){
   if(!gv('name').trim()){alert('Item name is required.');return;}
+  // New items must have a photo — reject early to prevent phantom records
+  if(!editingId&&!photoBase64&&!window._fetchedImageUrl){
+    document.getElementById('save-status').textContent='⚠ A photo is required for new items. Upload one or paste a product URL above.';
+    return;
+  }
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='Saving…';
   const st=document.getElementById('save-status');st.textContent='Building record…';
+  const hadNewImage=!!(photoBase64||window._fetchedImageUrl);
   try{
-    const rec=buildRecord(editingId);let imgOK=false;
-    if(photoBase64){st.textContent='Pushing image…';await ghPush(rec.image.filename,photoBase64,true);imgOK=true;}
-    else if(window._fetchedImageUrl){
+    const rec=buildRecord(editingId);
+    // Image push must complete successfully before closet.json is written
+    if(photoBase64){
+      st.textContent='Pushing image…';
+      try{await ghPush(rec.image.filename,photoBase64,true);}
+      catch(e){throw new Error('Image upload failed: '+e.message+'. closet.json was not changed.');}
+    } else if(window._fetchedImageUrl){
       st.textContent='Fetching product image…';
-      try{const ir=await fetch(WORKER_URL+'/proxy/image?url='+encodeURIComponent(window._fetchedImageUrl),{credentials:'include'});if(ir.ok){const imgData=await ir.json();await ghPush(rec.image.filename,imgData.content,true);imgOK=true;}}
-      catch(e){console.warn('Image push failed:',e.message);}
+      let ir;
+      try{ir=await fetch(WORKER_URL+'/proxy/image?url='+encodeURIComponent(window._fetchedImageUrl));}
+      catch(e){throw new Error('Network error fetching product image: '+e.message+'. closet.json was not changed.');}
+      if(!ir.ok){const ed=await ir.json().catch(()=>({}));throw new Error('Could not fetch product image ('+ir.status+'): '+(ed.error||'unknown error')+'. closet.json was not changed.');}
+      const imgData=await ir.json();
+      try{await ghPush(rec.image.filename,imgData.content,true);}
+      catch(e){throw new Error('Image upload to GitHub failed: '+e.message+'. closet.json was not changed.');}
     }
+    // Image is safely in GitHub — now write metadata
     st.textContent='Updating closet.json…';
     if(editingId){const idx=closetData.items.findIndex(i=>i.id===editingId);if(idx!==-1)closetData.items[idx]=rec;else closetData.items.push(rec);}
     else closetData.items.push(rec);
     closetData.schema_updated=new Date().toISOString().split('T')[0];
     await ghPush('closet.json',JSON.stringify(closetData,null,2));
-    editingId=rec.id;window._fetchedImageUrl=null;
+    editingId=rec.id;window._fetchedImageUrl=null;photoBase64=null;
+    document.getElementById('recover-bar').style.display='none';
     document.getElementById('delete-btn').style.display='inline-block';
-    renderList();st.textContent='✓ Saved'+(imgOK?' + image':'')+' — Cloudflare updates in ~60s';
+    renderList();st.textContent='✓ Saved'+(hadNewImage?' + image':'')+' — Cloudflare updates in ~60s';
     setTimeout(()=>st.textContent='',7000);
   }catch(e){st.textContent='✗ '+e.message;console.error(e);}
   btn.disabled=false;btn.textContent='Save & push ↑';
@@ -638,7 +714,8 @@ function loadItem(item){
   tags=[...(item.meta.tags||[])];renderTA(tags,'tags-wrap','rmTag');setV('notes',item.meta.notes||'');setV('claude-context',item.meta.claude_context||'');setSel('rotation',item.meta.rotation||'');
   document.getElementById('delete-btn').style.display='inline-block';document.getElementById('autofill-legend').classList.remove('show');document.querySelectorAll('.autofilled').forEach(e=>e.classList.remove('autofilled'));
   document.getElementById('url-img-section').style.display='none';
-  if(item.image&&item.image.filename){const w=document.getElementById('img-prev'),i=document.getElementById('img-prev-img');i.src=item.image.filename;w.style.display='flex';}else{document.getElementById('img-prev').style.display='none';}
+  document.getElementById('recover-bar').style.display='none';
+  if(item.image&&item.image.filename){const w=document.getElementById('img-prev'),i=document.getElementById('img-prev-img');i.src=item.image.filename;w.style.display='flex';checkImageExists(item);}else{document.getElementById('img-prev').style.display='none';}
   document.querySelector('.form-panel').scrollTop=0;renderList();updatePreview();
 }
 
@@ -653,6 +730,7 @@ function clearForm(){
   ['spring','summer','fall','winter'].forEach(s=>document.getElementById('s-'+s).checked=false);
   document.querySelectorAll('#embel-wrap input,#sustain-wrap input').forEach(cb=>cb.checked=false);
   document.getElementById('url-img-section').style.display='none';
+  document.getElementById('recover-bar').style.display='none';
   document.getElementById('form-lo').value=3;document.getElementById('form-hi').value=7;updateFormality();
   renderTA([],'tags-wrap','rmTag');renderTA([],'occ-wrap','rmOcc');renderTA([],'feels-wrap','rmFeels');
   onDeptChange();document.getElementById('img-prev').style.display='none';document.getElementById('analyze-bar').style.display='none';
