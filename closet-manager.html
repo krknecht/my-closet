@@ -397,7 +397,7 @@ function renderList(){
   active.forEach(item=>{
     const el=document.createElement('div');el.className='list-item'+(editingId===item.id?' active':'');el.onclick=()=>loadItem(item);
     const th=document.createElement('div');th.className='list-item-thumb';
-    if(item.image&&item.image.filename){const img=document.createElement('img');img.src=item.image.filename;img.onerror=()=>{img.remove();th.textContent=EMOJI[item.category.department]||'🧺';};th.appendChild(img);}
+    if(item.image&&item.image.filename){const img=document.createElement('img');img.src='https://my-closet.pages.dev/'+item.image.filename;img.onerror=()=>{img.remove();th.textContent=EMOJI[item.category.department]||'🧺';};th.appendChild(img);}
     else th.textContent=EMOJI[item.category.department]||'🧺';
     const info=document.createElement('div');info.className='list-item-info';
     info.innerHTML='<div class="list-item-brand">'+esc(item.identity.brand||'')+'</div><div class="list-item-name">'+esc(item.identity.name)+'</div><div class="list-item-cat">'+esc([item.category.category,item.category.subcategory].filter(Boolean).join(' › '))+'</div>';
@@ -715,7 +715,7 @@ function loadItem(item){
   document.getElementById('delete-btn').style.display='inline-block';document.getElementById('autofill-legend').classList.remove('show');document.querySelectorAll('.autofilled').forEach(e=>e.classList.remove('autofilled'));
   document.getElementById('url-img-section').style.display='none';
   document.getElementById('recover-bar').style.display='none';
-  if(item.image&&item.image.filename){const w=document.getElementById('img-prev'),i=document.getElementById('img-prev-img');i.src=item.image.filename;w.style.display='flex';checkImageExists(item);}else{document.getElementById('img-prev').style.display='none';}
+  if(item.image&&item.image.filename){const w=document.getElementById('img-prev'),i=document.getElementById('img-prev-img');i.src='https://my-closet.pages.dev/'+item.image.filename;w.style.display='flex';checkImageExists(item);}else{document.getElementById('img-prev').style.display='none';}
   document.querySelector('.form-panel').scrollTop=0;renderList();updatePreview();
 }
 
