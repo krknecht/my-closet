@@ -1138,7 +1138,7 @@
     {
       "id": "6b751d7b-dede-4f7c-a7f6-df227e948717",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-07T00:00:00Z",
+      "updated_at": "2026-04-13T01:29:06.048Z",
       "status": "active",
       "identity": {
         "name": "Next Didi Pant in Lightweight Viscose Wool",
@@ -1160,8 +1160,8 @@
       "image": {
         "filename": "6b751d7b-dede-4f7c-a7f6-df227e948717.webp",
         "format": "webp",
-        "alt_images": [],
-        "public_url": "https://my-closet.pages.dev/6b751d7b-dede-4f7c-a7f6-df227e948717.webp"
+        "public_url": "https://my-closet.pages.dev/6b751d7b-dede-4f7c-a7f6-df227e948717.webp",
+        "alt_images": []
       },
       "visual": {
         "colors": {
@@ -1173,10 +1173,10 @@
         "print_description": "MÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ©lange weave ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ subtle tonal variation in the fabric.",
         "silhouette": "Wide-leg",
         "length": "Floor",
+        "sleeve_length": null,
         "embellishment": [
           "None"
-        ],
-        "sleeve_length": null
+        ]
       },
       "construction": {
         "fabric": [
@@ -1237,11 +1237,11 @@
         "source_url": "https://www.twpclothing.com/products/next-didi-medium-indigo",
         "purchase_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "retail_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "condition_at_acquisition": null,
         "current_condition": null,
@@ -1268,7 +1268,8 @@
           "TWP"
         ],
         "notes": null,
-        "claude_context": null
+        "claude_context": null,
+        "rotation": null
       }
     },
     {
