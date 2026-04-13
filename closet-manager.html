@@ -478,12 +478,14 @@ function loadPhoto(file){
 async function checkImageExists(item){
   const bar=document.getElementById('recover-bar');
   if(!item.image||!item.image.filename){bar.style.display='none';return;}
+  const filename=item.image.filename;
   try{
-    const r=await fetch('https://my-closet.pages.dev/'+item.image.filename,{method:'HEAD'});
-    if(r.ok){bar.style.display='none';}
-    else{showRecoverBar(item);}
+    const r=await fetch(WORKER_URL+'/proxy/contents/'+filename);
+    if(r.status===200){bar.style.display='none';}
+    else if(r.status===404){showRecoverBar(item);}
+    else{console.warn('checkImageExists: unexpected status',r.status,'for',filename);bar.style.display='none';}
   }catch(e){
-    // Network error — skip check, don't show bar
+    console.warn('checkImageExists: network error',e.message,'for',filename);
     bar.style.display='none';
   }
 }
