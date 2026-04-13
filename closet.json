@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "schema_updated": "2026-04-11",
+  "schema_updated": "2026-04-13",
   "owner_id": null,
   "items": [
     {
@@ -633,12 +633,12 @@
     {
       "id": "b7bfe693-c87f-4044-aae1-6f87fa8ca8e9",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-07T00:00:00Z",
+      "updated_at": "2026-04-13T01:10:47.759Z",
       "status": "active",
       "identity": {
         "name": "Jules Short in Waffle Weave",
         "brand": "KALLMEYER",
-        "collection_season": null,
+        "collection_season": "SS26",
         "year_acquired": 2026,
         "vintage": {
           "is_vintage": false,
@@ -655,8 +655,8 @@
       "image": {
         "filename": "b7bfe693-c87f-4044-aae1-6f87fa8ca8e9.jpg",
         "format": "jpg",
-        "alt_images": [],
-        "public_url": "https://my-closet.pages.dev/b7bfe693-c87f-4044-aae1-6f87fa8ca8e9.jpg"
+        "public_url": "https://my-closet.pages.dev/b7bfe693-c87f-4044-aae1-6f87fa8ca8e9.jpg",
+        "alt_images": []
       },
       "visual": {
         "colors": {
@@ -668,10 +668,10 @@
         "print_description": "Subtle waffle weave texture.",
         "silhouette": "Relaxed",
         "length": "Thigh",
+        "sleeve_length": null,
         "embellishment": [
           "None"
-        ],
-        "sleeve_length": null
+        ]
       },
       "construction": {
         "fabric": [
@@ -729,14 +729,14 @@
         "source_url": "https://kallmeyer.nyc/collections/new-arrivals/products/dkss264012-jules-short-waffle-weave-blonde",
         "purchase_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "retail_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "condition_at_acquisition": "New with tags",
-        "current_condition": "Excellent",
+        "current_condition": null,
         "storage_location": null,
         "acquisition_type": "Purchased"
       },
@@ -758,7 +758,8 @@
           "ecru"
         ],
         "notes": null,
-        "claude_context": "Pills easily ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ avoid abrasive surfaces and rough washing."
+        "claude_context": "Pills easily ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ avoid abrasive surfaces and rough washing.",
+        "rotation": null
       }
     },
     {
