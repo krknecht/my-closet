@@ -890,7 +890,7 @@
     {
       "id": "1a461c10-740b-4d8e-b60d-43b78639678f",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-08T21:57:47.667Z",
+      "updated_at": "2026-04-13T01:27:12.452Z",
       "status": "active",
       "identity": {
         "name": "Lowell Wrap Belt in Leather Dark Brown",
@@ -912,8 +912,8 @@
       "image": {
         "filename": "1a461c10-740b-4d8e-b60d-43b78639678f.jpg",
         "format": "jpg",
-        "alt_images": [],
-        "public_url": "https://my-closet.pages.dev/1a461c10-740b-4d8e-b60d-43b78639678f.jpg"
+        "public_url": "https://my-closet.pages.dev/1a461c10-740b-4d8e-b60d-43b78639678f.jpg",
+        "alt_images": []
       },
       "visual": {
         "colors": {
