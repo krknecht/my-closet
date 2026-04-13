@@ -6,7 +6,7 @@
     {
       "id": "dc4574de-971c-482b-9c56-3eeedc8666a9",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-08T21:56:40.663Z",
+      "updated_at": "2026-04-13T01:20:14.492Z",
       "status": "active",
       "identity": {
         "name": "Mid-Rise Straight Jeans",
@@ -26,10 +26,10 @@
         "subcategory": "Straight"
       },
       "image": {
-        "filename": "dc4574de-971c-482b-9c56-3eeedc8666a9.png",
-        "format": "png",
-        "alt_images": [],
-        "public_url": "https://my-closet.pages.dev/dc4574de-971c-482b-9c56-3eeedc8666a9.png"
+        "filename": "dc4574de-971c-482b-9c56-3eeedc8666a9.jpg",
+        "format": "jpg",
+        "public_url": "https://my-closet.pages.dev/dc4574de-971c-482b-9c56-3eeedc8666a9.jpg",
+        "alt_images": []
       },
       "visual": {
         "colors": {
