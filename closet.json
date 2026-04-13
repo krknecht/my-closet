@@ -1013,7 +1013,7 @@
     {
       "id": "fb17e342-ffb0-47b3-adb5-595ab015ea52",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-07T00:00:00Z",
+      "updated_at": "2026-04-13T01:28:14.723Z",
       "status": "active",
       "identity": {
         "name": "Shiloh Miniskirt in Lightweight Suede",
@@ -1035,8 +1035,8 @@
       "image": {
         "filename": "fb17e342-ffb0-47b3-adb5-595ab015ea52.webp",
         "format": "webp",
-        "alt_images": [],
-        "public_url": "https://my-closet.pages.dev/fb17e342-ffb0-47b3-adb5-595ab015ea52.webp"
+        "public_url": "https://my-closet.pages.dev/fb17e342-ffb0-47b3-adb5-595ab015ea52.webp",
+        "alt_images": []
       },
       "visual": {
         "colors": {
@@ -1048,10 +1048,10 @@
         "print_description": null,
         "silhouette": "Straight / Pencil",
         "length": "Waist",
+        "sleeve_length": "Short sleeve",
         "embellishment": [
           "None"
-        ],
-        "sleeve_length": null
+        ]
       },
       "construction": {
         "fabric": [
@@ -1101,14 +1101,14 @@
         "source_url": "https://kallmeyer.nyc/collections/new-arrivals/products/dkrt253333-shiloh-miniskirt-lightweight-suede-cowboy",
         "purchase_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "retail_price": {
           "amount": null,
-          "currency": "USD"
+          "currency": null
         },
         "condition_at_acquisition": "New with tags",
-        "current_condition": "Excellent",
+        "current_condition": "Good",
         "storage_location": null,
         "acquisition_type": "Purchased"
       },
@@ -1131,7 +1131,8 @@
           "tailored"
         ],
         "notes": null,
-        "claude_context": null
+        "claude_context": null,
+        "rotation": null
       }
     },
     {
