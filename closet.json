@@ -259,7 +259,7 @@
     {
       "id": "4dde8c42-4838-4122-8a95-fb4aa8f16e41",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-13T01:22:13.662Z",
+      "updated_at": "2026-04-13T01:22:42.670Z",
       "status": "active",
       "identity": {
         "name": "Vintage Hourglass Crepe 'CC' Jacket",
@@ -268,7 +268,7 @@
         "year_acquired": null,
         "vintage": {
           "is_vintage": true,
-          "era": null
+          "era": "1997"
         },
         "sku": null,
         "colorway_name": "Navy"
