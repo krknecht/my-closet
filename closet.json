@@ -1410,7 +1410,7 @@
     {
       "id": "949cd0a7-2e1d-4cd4-b660-89bdb8495ccd",
       "created_at": "2026-04-08T18:06:52.978Z",
-      "updated_at": "2026-04-08T18:08:40.347Z",
+      "updated_at": "2026-04-13T01:32:08.206Z",
       "status": "active",
       "identity": {
         "name": "Double-breasted wool blazer",
@@ -1432,8 +1432,8 @@
       "image": {
         "filename": "949cd0a7-2e1d-4cd4-b660-89bdb8495ccd.jpg",
         "format": "jpg",
-        "alt_images": [],
-        "public_url": "https://my-closet.pages.dev/949cd0a7-2e1d-4cd4-b660-89bdb8495ccd.jpg"
+        "public_url": "https://my-closet.pages.dev/949cd0a7-2e1d-4cd4-b660-89bdb8495ccd.jpg",
+        "alt_images": []
       },
       "visual": {
         "colors": {
