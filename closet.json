@@ -767,7 +767,7 @@
     {
       "id": "5bfa37fa-1f2e-462a-aec5-2d8408f6cf75",
       "created_at": "2026-04-07T00:00:00Z",
-      "updated_at": "2026-04-08T21:57:57.470Z",
+      "updated_at": "2026-04-13T01:26:45.694Z",
       "status": "active",
       "identity": {
         "name": "Lowell Wrap Belt in Leather Bone",
@@ -789,8 +789,8 @@
       "image": {
         "filename": "5bfa37fa-1f2e-462a-aec5-2d8408f6cf75.jpg",
         "format": "jpg",
-        "alt_images": [],
-        "public_url": "https://my-closet.pages.dev/5bfa37fa-1f2e-462a-aec5-2d8408f6cf75.jpg"
+        "public_url": "https://my-closet.pages.dev/5bfa37fa-1f2e-462a-aec5-2d8408f6cf75.jpg",
+        "alt_images": []
       },
       "visual": {
         "colors": {
